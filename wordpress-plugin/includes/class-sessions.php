@@ -2,12 +2,12 @@
 namespace L4D2Stats;
 
 /**
- * 場次記錄
+ * 戰役場次記錄 (以戰役為單位分組顯示)
  */
 class Sessions {
     public static function render($atts) {
         $atts = shortcode_atts([
-            'limit' => 30,
+            'limit' => 300,
         ], $atts);
 
         $db = Database::instance();
@@ -19,6 +19,7 @@ class Sessions {
                 s.start_time, s.end_time, s.duration,
                 s.difficulty, s.completed, s.campaign_completed,
                 s.survivor_count,
+                m.map_name AS map_code,
                 m.display_name AS map_name,
                 m.campaign_name,
                 m.is_finale,
@@ -32,7 +33,11 @@ class Sessions {
             LIMIT %d
         ";
 
-        $sessions = $db->query($sql, [$limit], 'recent_sessions_' . $limit, 60);
+        $sessions_raw = $db->query($sql, [$limit], 'recent_sessions_raw_' . $limit, 60);
+
+        // 反轉為 ASC 以進行分組
+        $sessions_asc = array_reverse($sessions_raw);
+        $campaign_runs = CampaignRun::group_sessions($sessions_asc);
 
         // 難度中文對照
         $difficulty_labels = [

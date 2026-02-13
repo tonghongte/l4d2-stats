@@ -2,7 +2,9 @@
 namespace L4D2Stats;
 
 /**
- * 場次詳細資訊
+ * 場次詳細資訊 — 雙模式路由
+ * 預設: 戰役場次詳細 (campaign run detail)
+ * ?view=map: 單地圖場次詳細 (原始行為)
  */
 class SessionDetail {
 
@@ -26,6 +28,161 @@ class SessionDetail {
             return '<div class="l4d2-notice">請指定場次 ID。</div>';
         }
 
+        $view = isset($_GET['view']) ? sanitize_text_field($_GET['view']) : '';
+
+        if ($view === 'map') {
+            return self::render_map_detail($session_id);
+        }
+
+        return self::render_campaign_detail($session_id);
+    }
+
+    /**
+     * 戰役場次詳細頁面
+     */
+    private static function render_campaign_detail($session_id) {
+        $db = Database::instance();
+
+        // 透過 CampaignRun 找出包含此 session 的戰役場次
+        $run = CampaignRun::find_run_for_session($session_id);
+
+        // 如果找不到戰役 run (例如自訂地圖)，fallback 到單地圖
+        if (!$run) {
+            return self::render_map_detail($session_id);
+        }
+
+        // 收集所有 session_id
+        $session_ids = array_map(function($s) {
+            return (int)$s->session_id;
+        }, $run['sessions']);
+        $ids_placeholder = implode(',', $session_ids);
+
+        // 聚合玩家數據
+        $players = $db->query(
+            "SELECT
+                p.name, p.steam_id, p.steam_id_64,
+                SUM(COALESCE(sps.kills_infected, 0)) AS kills_infected,
+                SUM(COALESCE(sps.kills_si, 0)) AS kills_si,
+                SUM(COALESCE(sps.kills_witch, 0)) AS kills_witch,
+                SUM(COALESCE(sps.kills_tank, 0)) AS kills_tank,
+                SUM(COALESCE(sps.headshots, 0)) AS headshots,
+                SUM(COALESCE(sps.damage_dealt, 0)) AS damage_dealt,
+                SUM(COALESCE(sps.damage_taken, 0)) AS damage_taken,
+                SUM(COALESCE(sps.deaths, 0)) AS deaths,
+                SUM(COALESCE(sps.incaps, 0)) AS incaps,
+                SUM(COALESCE(sps.revives_given, 0)) AS revives_given,
+                SUM(COALESCE(sps.revives_received, 0)) AS revives_received,
+                SUM(COALESCE(sps.heals_given, 0)) AS heals_given,
+                SUM(COALESCE(sps.heals_received, 0)) AS heals_received,
+                SUM(COALESCE(sps.health_restored, 0)) AS health_restored,
+                SUM(COALESCE(sps.pills_used, 0)) AS pills_used,
+                SUM(COALESCE(sps.adrenaline_used, 0)) AS adrenaline_used,
+                SUM(COALESCE(sps.defibs_used, 0)) AS defibs_used,
+                SUM(COALESCE(sps.friendly_fire_dealt, 0)) AS friendly_fire_dealt,
+                SUM(COALESCE(sps.friendly_fire_damage, 0)) AS friendly_fire_damage,
+                SUM(COALESCE(sps.shots_fired, 0)) AS shots_fired,
+                SUM(COALESCE(sps.shots_hit, 0)) AS shots_hit,
+                SUM(COALESCE(sps.melee_swings, 0)) AS melee_swings,
+                SUM(COALESCE(sps.melee_hits, 0)) AS melee_hits,
+                (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
+                CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
+                     THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
+                     ELSE 0
+                END AS accuracy,
+                CASE WHEN (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) > 0
+                     THEN ROUND(SUM(COALESCE(sps.headshots, 0)) / (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) * 100, 1)
+                     ELSE 0
+                END AS hs_rate
+             FROM l4d2_session_players sp
+             JOIN l4d2_players p ON p.id = sp.player_id
+             LEFT JOIN l4d2_session_player_stats sps
+                  ON sps.session_id = sp.session_id AND sps.player_id = sp.player_id
+             WHERE sp.session_id IN ({$ids_placeholder})
+             GROUP BY p.id
+             ORDER BY total_kills DESC"
+        );
+
+        // 檢查是否有數據
+        $has_stats = false;
+        foreach ($players as $p) {
+            if ((int)$p->total_kills > 0 || (int)$p->damage_dealt > 0 || (int)$p->shots_fired > 0) {
+                $has_stats = true;
+                break;
+            }
+        }
+
+        // 聚合武器數據
+        $weapons = $db->query(
+            "SELECT
+                p.name AS player_name,
+                w.display_name AS weapon_name, w.weapon_type,
+                SUM(spws.kills) AS kills,
+                SUM(spws.headshots) AS headshots,
+                SUM(spws.damage_dealt) AS damage_dealt,
+                SUM(spws.shots_fired) AS shots_fired,
+                SUM(spws.shots_hit) AS shots_hit,
+                CASE WHEN SUM(spws.shots_fired) > 0
+                     THEN ROUND(SUM(spws.shots_hit) / SUM(spws.shots_fired) * 100, 1)
+                     ELSE 0
+                END AS accuracy
+             FROM l4d2_session_player_weapon_stats spws
+             JOIN l4d2_players p ON p.id = spws.player_id
+             JOIN l4d2_weapons w ON w.id = spws.weapon_id
+             WHERE spws.session_id IN ({$ids_placeholder})
+             GROUP BY spws.player_id, spws.weapon_id
+             ORDER BY kills DESC"
+        );
+
+        // 武器彙總 (甜甜圈圖)
+        $weapon_summary = $db->query(
+            "SELECT
+                w.display_name,
+                SUM(spws.kills) AS total_kills
+             FROM l4d2_session_player_weapon_stats spws
+             JOIN l4d2_weapons w ON w.id = spws.weapon_id
+             WHERE spws.session_id IN ({$ids_placeholder})
+             GROUP BY spws.weapon_id
+             HAVING total_kills > 0
+             ORDER BY total_kills DESC
+             LIMIT 10"
+        );
+
+        // 準備圖表數據
+        $chart_kills_labels = [];
+        $chart_kills_data = [];
+        $chart_damage_labels = [];
+        $chart_damage_data = [];
+        foreach ($players as $p) {
+            $chart_kills_labels[] = $p->name;
+            $chart_kills_data[] = (int)$p->total_kills;
+            $chart_damage_labels[] = $p->name;
+            $chart_damage_data[] = (int)$p->damage_dealt;
+        }
+
+        $chart_weapon_labels = [];
+        $chart_weapon_data = [];
+        foreach ($weapon_summary as $ws) {
+            $chart_weapon_labels[] = $ws->display_name;
+            $chart_weapon_data[] = (int)$ws->total_kills;
+        }
+
+        // 難度中文對照
+        $difficulty_labels = [
+            'easy'       => '簡單',
+            'normal'     => '普通',
+            'hard'       => '進階',
+            'impossible' => '專家',
+        ];
+
+        ob_start();
+        include L4D2_STATS_DIR . 'templates/campaign-detail.php';
+        return ob_get_clean();
+    }
+
+    /**
+     * 單地圖場次詳細頁面 (原始行為)
+     */
+    private static function render_map_detail($session_id) {
         $db = Database::instance();
 
         // 場次基本資訊
@@ -39,6 +196,15 @@ class SessionDetail {
 
         if (!$session) {
             return '<div class="l4d2-notice">找不到此場次。</div>';
+        }
+
+        // 找出所屬戰役場次的 first_session_id (用於麵包屑)
+        $campaign_run_id = null;
+        if (!empty($session->campaign_name)) {
+            $run = CampaignRun::find_run_for_session($session_id);
+            if ($run) {
+                $campaign_run_id = $run['first_session_id'];
+            }
         }
 
         // 場次玩家數據

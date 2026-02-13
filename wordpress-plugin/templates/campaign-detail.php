@@ -11,50 +11,33 @@
             <span>場次列表</span>
         <?php endif; ?>
         <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
-        <?php if (!empty($campaign_run_id)): ?>
-            <a href="<?php echo esc_url(add_query_arg('session_id',
-                (int)$campaign_run_id,
-                get_permalink(get_page_by_path('session-detail'))
-            )); ?>">
-                <?php echo esc_html($session->campaign_name); ?>
-            </a>
-            <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
-        <?php endif; ?>
-        <span><?php echo esc_html($session->map_name ?: '未知地圖'); ?></span>
+        <span><?php echo esc_html($run['campaign_name']); ?></span>
     </div>
 
-    <!-- 場次標題 -->
-    <h2 class="l4d2-title">章節詳細資訊</h2>
-
-    <!-- 場次基本資料卡 -->
+    <!-- 戰役標題卡 -->
     <div class="l4d2-session-header">
         <div class="l4d2-session-info">
             <h3 class="l4d2-session-map-name">
-                <?php echo esc_html($session->map_name ?: '未知地圖'); ?>
-                <?php if ($session->is_finale): ?>
-                    <span class="l4d2-badge l4d2-badge-gold">Finale</span>
-                <?php endif; ?>
+                <?php echo esc_html($run['campaign_name']); ?>
             </h3>
             <div class="l4d2-player-meta">
-                <span>戰役: <?php echo esc_html($session->campaign_name); ?></span>
                 <span>難度:
-                    <span class="l4d2-difficulty l4d2-diff-<?php echo esc_attr($session->difficulty); ?>">
-                        <?php echo esc_html($difficulty_labels[$session->difficulty] ?? ucfirst($session->difficulty)); ?>
+                    <span class="l4d2-difficulty l4d2-diff-<?php echo esc_attr($run['difficulty']); ?>">
+                        <?php echo esc_html($difficulty_labels[$run['difficulty']] ?? ucfirst($run['difficulty'])); ?>
                     </span>
                 </span>
-                <span>人數: <?php echo (int)$session->survivor_count; ?></span>
+                <span>人數: <?php echo (int)$run['survivor_count']; ?></span>
+                <span>章節: <?php echo (int)$run['map_count']; ?> 章</span>
             </div>
             <div class="l4d2-player-meta">
-                <span>開始: <?php echo date('Y-m-d H:i:s', strtotime($session->start_time)); ?></span>
-                <?php if ($session->end_time): ?>
-                    <span>結束: <?php echo date('Y-m-d H:i:s', strtotime($session->end_time)); ?></span>
-                <?php endif; ?>
-                <span>時長: <?php echo \L4D2Stats\Plugin::format_playtime($session->duration); ?></span>
+                <span>開始: <?php echo date('Y-m-d H:i:s', strtotime($run['start_time'])); ?></span>
+                <span>結束: <?php echo date('Y-m-d H:i:s', strtotime($run['end_time'])); ?></span>
+                <span>總時長: <?php echo \L4D2Stats\Plugin::format_playtime($run['total_duration']); ?></span>
             </div>
             <div class="l4d2-player-meta" style="margin-top: 8px;">
-                <?php if ($session->campaign_completed): ?>
-                    <span class="l4d2-badge l4d2-badge-gold">戰役通關</span>
-                <?php elseif ($session->completed): ?>
+                <?php if ($run['is_in_order']): ?>
+                    <span class="l4d2-badge l4d2-badge-gold">依序通關</span>
+                <?php elseif ($run['is_completed']): ?>
                     <span class="l4d2-badge l4d2-badge-success">通關</span>
                 <?php else: ?>
                     <span class="l4d2-badge l4d2-badge-fail">未通關</span>
@@ -63,9 +46,57 @@
         </div>
     </div>
 
+    <!-- 章節列表 -->
+    <h3 class="l4d2-section-title">章節地圖</h3>
+    <table class="l4d2-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>地圖</th>
+                <th>時長</th>
+                <th>結果</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($run['sessions'] as $idx => $s): ?>
+            <tr>
+                <td>
+                    <span class="l4d2-chapter-num"><?php echo $idx + 1; ?></span>
+                </td>
+                <td>
+                    <?php echo esc_html($s->map_name); ?>
+                    <?php if ((int)$s->is_finale): ?>
+                        <span class="l4d2-badge l4d2-badge-gold">Finale</span>
+                    <?php endif; ?>
+                </td>
+                <td><?php echo \L4D2Stats\Plugin::format_playtime($s->duration); ?></td>
+                <td>
+                    <?php if ((int)$s->campaign_completed): ?>
+                        <span class="l4d2-badge l4d2-badge-gold">戰役通關</span>
+                    <?php elseif ((int)$s->completed): ?>
+                        <span class="l4d2-badge l4d2-badge-success">通關</span>
+                    <?php else: ?>
+                        <span class="l4d2-badge l4d2-badge-fail">未通關</span>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <a href="<?php echo esc_url(add_query_arg([
+                        'session_id' => (int)$s->session_id,
+                        'view' => 'map',
+                    ], get_permalink(get_page_by_path('session-detail')))); ?>"
+                       class="l4d2-chapter-detail-link">
+                        查看詳細
+                    </a>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
     <?php if (!$has_stats): ?>
         <div class="l4d2-notice">
-            此場次尚無詳細數據。場次數據功能需要更新 SourceMod 插件後的新場次才會記錄。
+            此戰役場次尚無詳細數據。場次數據功能需要更新 SourceMod 插件後的新場次才會記錄。
         </div>
     <?php endif; ?>
 
@@ -74,7 +105,7 @@
     <div class="l4d2-chart-row">
         <!-- 玩家擊殺比較 -->
         <div class="l4d2-chart-container l4d2-chart-half">
-            <h4 class="l4d2-chart-title">玩家擊殺比較</h4>
+            <h4 class="l4d2-chart-title">玩家擊殺比較 (全戰役)</h4>
             <canvas id="l4d2-session-kills-chart"
                     data-chart='<?php echo esc_attr(json_encode([
                         'labels' => $chart_kills_labels,
@@ -84,7 +115,7 @@
         </div>
         <!-- 玩家傷害比較 -->
         <div class="l4d2-chart-container l4d2-chart-half">
-            <h4 class="l4d2-chart-title">玩家傷害比較</h4>
+            <h4 class="l4d2-chart-title">玩家傷害比較 (全戰役)</h4>
             <canvas id="l4d2-session-damage-chart"
                     data-chart='<?php echo esc_attr(json_encode([
                         'labels' => $chart_damage_labels,
@@ -97,7 +128,7 @@
 
     <?php if (!empty($chart_weapon_data) && array_sum($chart_weapon_data) > 0): ?>
     <div class="l4d2-chart-container">
-        <h4 class="l4d2-chart-title">武器使用分布</h4>
+        <h4 class="l4d2-chart-title">武器使用分布 (全戰役)</h4>
         <canvas id="l4d2-session-weapon-chart"
                 data-chart='<?php echo esc_attr(json_encode([
                     'labels' => $chart_weapon_labels,
@@ -109,7 +140,7 @@
 
     <!-- 玩家數據表 -->
     <?php if (!empty($players)): ?>
-    <h3 class="l4d2-section-title">玩家表現</h3>
+    <h3 class="l4d2-section-title">玩家表現 (全戰役合計)</h3>
     <table id="l4d2-session-players-table" class="l4d2-table display">
         <thead>
             <tr>
@@ -170,7 +201,7 @@
     </table>
 
     <!-- 團隊互助 / 道具使用 -->
-    <h3 class="l4d2-section-title">團隊互助 / 道具使用</h3>
+    <h3 class="l4d2-section-title">團隊互助 / 道具使用 (全戰役合計)</h3>
     <table class="l4d2-table display">
         <thead>
             <tr>
@@ -205,7 +236,7 @@
 
     <!-- 武器明細表 -->
     <?php if (!empty($weapons)): ?>
-    <h3 class="l4d2-section-title">武器使用明細</h3>
+    <h3 class="l4d2-section-title">武器使用明細 (全戰役合計)</h3>
     <table id="l4d2-session-weapons-table" class="l4d2-table display">
         <thead>
             <tr>

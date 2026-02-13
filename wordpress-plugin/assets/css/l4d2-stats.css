@@ -471,6 +471,64 @@
 }
 
 /* ============================================================
+   Breadcrumb Navigation
+   ============================================================ */
+.l4d2-breadcrumb {
+    margin-bottom: 20px;
+    padding: 10px 0;
+    font-size: 13px;
+    color: #888;
+}
+
+.l4d2-breadcrumb a {
+    color: #6bb5ff;
+    text-decoration: none;
+}
+
+.l4d2-breadcrumb a:hover {
+    color: #99ccff;
+    text-decoration: underline;
+}
+
+.l4d2-breadcrumb-sep {
+    margin: 0 8px;
+    color: #555;
+}
+
+/* ============================================================
+   Chapter List (Campaign Detail)
+   ============================================================ */
+.l4d2-chapter-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #2c2c2c;
+    color: #ff6b6b;
+    font-weight: 700;
+    font-size: 13px;
+    border: 1px solid #444;
+}
+
+.l4d2-chapter-detail-link {
+    color: #6bb5ff;
+    text-decoration: none;
+    font-size: 12px;
+    padding: 4px 10px;
+    border: 1px solid rgba(107, 181, 255, 0.2);
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.l4d2-chapter-detail-link:hover {
+    background: rgba(107, 181, 255, 0.1);
+    border-color: #6bb5ff;
+    color: #99ccff;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 768px) {
