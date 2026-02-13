@@ -1,11 +1,12 @@
 /**
  * L4D2 Player Stats - Frontend JavaScript
  * DataTables 初始化、Chart.js 圖表、AJAX 搜尋
+ * 支援 PJAX (Argon Theme) 頁面切換後重新初始化
  */
-jQuery(document).ready(function ($) {
+(function ($) {
 
     // ============================================================
-    // DataTables 初始化
+    // 共用設定
     // ============================================================
     var dtDefaults = {
         pageLength: 25,
@@ -26,65 +27,6 @@ jQuery(document).ready(function ($) {
         },
     };
 
-    // 排行榜
-    if ($('#l4d2-leaderboard').length) {
-        $('#l4d2-leaderboard').DataTable(
-            $.extend({}, dtDefaults, {
-                order: [[2, 'desc']],
-            })
-        );
-    }
-
-    // 武器統計
-    if ($('#l4d2-weapons-table').length) {
-        $('#l4d2-weapons-table').DataTable(
-            $.extend({}, dtDefaults, {
-                order: [[3, 'desc']],
-            })
-        );
-    }
-
-    // 場次記錄
-    if ($('#l4d2-sessions-table').length) {
-        $('#l4d2-sessions-table').DataTable(
-            $.extend({}, dtDefaults, {
-                order: [[0, 'desc']],
-                pageLength: 20,
-            })
-        );
-    }
-
-    // 場次詳細 - 玩家表現
-    if ($('#l4d2-session-players-table').length) {
-        $('#l4d2-session-players-table').DataTable(
-            $.extend({}, dtDefaults, {
-                order: [[1, 'desc']],
-                paging: false,
-                searching: false,
-                info: false,
-            })
-        );
-    }
-
-    // 場次詳細 - 武器明細
-    if ($('#l4d2-session-weapons-table').length) {
-        $('#l4d2-session-weapons-table').DataTable(
-            $.extend({}, dtDefaults, {
-                order: [[3, 'desc']],
-            })
-        );
-    }
-
-    // 通用可排序表格
-    $('.l4d2-table.sortable').each(function () {
-        if (!$.fn.DataTable.isDataTable(this)) {
-            $(this).DataTable(dtDefaults);
-        }
-    });
-
-    // ============================================================
-    // Chart.js 圖表
-    // ============================================================
     var playerColors = [
         'rgba(255, 68, 68, 0.8)',
         'rgba(68, 138, 255, 0.8)',
@@ -96,21 +38,73 @@ jQuery(document).ready(function ($) {
         'rgba(139, 195, 74, 0.8)',
     ];
 
-    if (typeof Chart !== 'undefined') {
-        // 共用設定
+    var doughnutColors = [
+        'rgba(255, 68, 68, 0.85)',
+        'rgba(68, 138, 255, 0.85)',
+        'rgba(76, 175, 80, 0.85)',
+        'rgba(255, 193, 7, 0.85)',
+        'rgba(156, 39, 176, 0.85)',
+        'rgba(0, 188, 212, 0.85)',
+        'rgba(255, 87, 34, 0.85)',
+        'rgba(139, 195, 74, 0.85)',
+        'rgba(233, 30, 99, 0.85)',
+        'rgba(121, 85, 72, 0.85)',
+    ];
+
+    // 追蹤已建立的 Chart 實例，PJAX 切換時銷毀
+    var chartInstances = [];
+
+    // ============================================================
+    // 主要初始化函式（首次載入 + PJAX 切換後都會呼叫）
+    // ============================================================
+    function init() {
+        initDataTables();
+        initCharts();
+        initSearch();
+    }
+
+    // ============================================================
+    // DataTables
+    // ============================================================
+    function initDataTables() {
+        initDT('#l4d2-leaderboard', { order: [[2, 'desc']] });
+        initDT('#l4d2-weapons-table', { order: [[3, 'desc']] });
+        initDT('#l4d2-sessions-table', { order: [[0, 'desc']], pageLength: 20 });
+        initDT('#l4d2-session-players-table', {
+            order: [[1, 'desc']], paging: false, searching: false, info: false,
+        });
+        initDT('#l4d2-session-weapons-table', { order: [[3, 'desc']] });
+
+        $('.l4d2-table.sortable').each(function () {
+            if (!$.fn.DataTable.isDataTable(this)) {
+                $(this).DataTable(dtDefaults);
+            }
+        });
+    }
+
+    function initDT(selector, opts) {
+        var $el = $(selector);
+        if ($el.length && !$.fn.DataTable.isDataTable($el)) {
+            $el.DataTable($.extend({}, dtDefaults, opts));
+        }
+    }
+
+    // ============================================================
+    // Chart.js 圖表
+    // ============================================================
+    function initCharts() {
+        if (typeof Chart === 'undefined') return;
+
+        // 銷毀之前的 Chart 實例（PJAX 切換時）
+        chartInstances.forEach(function (c) { c.destroy(); });
+        chartInstances = [];
+
         Chart.defaults.color = '#ccc';
         Chart.defaults.borderColor = '#333';
 
-        // 玩家個人武器圖表
         renderBarChart('#l4d2-weapon-chart', 'weapons', '擊殺數', 'kills');
-
-        // 全站武器圖表
         renderBarChart('#l4d2-global-weapon-chart', 'weapons', '總擊殺數', 'kills');
-
-        // 戰役遊玩次數圖表
         renderBarChart('#l4d2-campaign-chart', 'campaigns', '遊玩次數', 'plays');
-
-        // 場次詳細頁面圖表
         renderSessionBarChart('#l4d2-session-kills-chart', '擊殺數');
         renderSessionBarChart('#l4d2-session-damage-chart', '傷害量');
         renderSessionDoughnutChart('#l4d2-session-weapon-chart');
@@ -131,40 +125,31 @@ jQuery(document).ready(function ($) {
         if (!rawData) return;
 
         var chartData;
-        try {
-            chartData = JSON.parse(rawData);
-        } catch (e) {
-            return;
-        }
+        try { chartData = JSON.parse(rawData); } catch (e) { return; }
 
         var labels = chartData.labels || [];
         var values = chartData[dataKey] || chartData.kills || chartData.plays || [];
-
         if (labels.length === 0) return;
 
         fixChartContainer(el, 340);
 
-        new Chart(el.getContext('2d'), {
+        chartInstances.push(new Chart(el.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: labels,
-                datasets: [
-                    {
-                        label: label,
-                        data: values,
-                        backgroundColor: 'rgba(255, 68, 68, 0.7)',
-                        borderColor: 'rgba(255, 68, 68, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4,
-                    },
-                ],
+                datasets: [{
+                    label: label,
+                    data: values,
+                    backgroundColor: 'rgba(255, 68, 68, 0.7)',
+                    borderColor: 'rgba(255, 68, 68, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }],
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -173,31 +158,19 @@ jQuery(document).ready(function ($) {
                     },
                     x: {
                         grid: { display: false },
-                        ticks: {
-                            color: '#999',
-                            maxRotation: 45,
-                            minRotation: 0,
-                        },
+                        ticks: { color: '#999', maxRotation: 45, minRotation: 0 },
                     },
                 },
             },
-        });
+        }));
     }
 
-    // ============================================================
-    // 場次詳細頁面圖表
-    // ============================================================
     function renderSessionBarChart(selector, label) {
         var el = document.querySelector(selector);
         if (!el) return;
 
         var chartData;
-        try {
-            chartData = JSON.parse(el.dataset.chart);
-        } catch (e) {
-            return;
-        }
-
+        try { chartData = JSON.parse(el.dataset.chart); } catch (e) { return; }
         if (!chartData.labels || chartData.labels.length === 0) return;
 
         fixChartContainer(el, 290);
@@ -206,7 +179,7 @@ jQuery(document).ready(function ($) {
             return playerColors[i % playerColors.length];
         });
 
-        new Chart(el.getContext('2d'), {
+        chartInstances.push(new Chart(el.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: chartData.labels,
@@ -225,9 +198,7 @@ jQuery(document).ready(function ($) {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: {
                         beginAtZero: true,
@@ -240,7 +211,7 @@ jQuery(document).ready(function ($) {
                     },
                 },
             },
-        });
+        }));
     }
 
     function renderSessionDoughnutChart(selector) {
@@ -248,30 +219,12 @@ jQuery(document).ready(function ($) {
         if (!el) return;
 
         var chartData;
-        try {
-            chartData = JSON.parse(el.dataset.chart);
-        } catch (e) {
-            return;
-        }
-
+        try { chartData = JSON.parse(el.dataset.chart); } catch (e) { return; }
         if (!chartData.labels || chartData.labels.length === 0) return;
 
         fixChartContainer(el, 340);
 
-        var doughnutColors = [
-            'rgba(255, 68, 68, 0.85)',
-            'rgba(68, 138, 255, 0.85)',
-            'rgba(76, 175, 80, 0.85)',
-            'rgba(255, 193, 7, 0.85)',
-            'rgba(156, 39, 176, 0.85)',
-            'rgba(0, 188, 212, 0.85)',
-            'rgba(255, 87, 34, 0.85)',
-            'rgba(139, 195, 74, 0.85)',
-            'rgba(233, 30, 99, 0.85)',
-            'rgba(121, 85, 72, 0.85)',
-        ];
-
-        new Chart(el.getContext('2d'), {
+        chartInstances.push(new Chart(el.getContext('2d'), {
             type: 'doughnut',
             data: {
                 labels: chartData.labels,
@@ -288,26 +241,26 @@ jQuery(document).ready(function ($) {
                 plugins: {
                     legend: {
                         position: 'right',
-                        labels: {
-                            color: '#ccc',
-                            padding: 12,
-                            font: { size: 12 },
-                        },
+                        labels: { color: '#ccc', padding: 12, font: { size: 12 } },
                     },
                 },
             },
-        });
+        }));
     }
 
     // ============================================================
     // 玩家搜尋 (REST API)
     // ============================================================
     var searchTimer;
-    var $searchInput = $('#l4d2-player-search-input');
-    var $searchResults = $('#l4d2-search-results');
 
-    if ($searchInput.length) {
-        $searchInput.on('input', function () {
+    function initSearch() {
+        var $searchInput = $('#l4d2-player-search-input');
+        var $searchResults = $('#l4d2-search-results');
+
+        if (!$searchInput.length) return;
+
+        // 避免 PJAX 重複綁定
+        $searchInput.off('input.l4d2').on('input.l4d2', function () {
             clearTimeout(searchTimer);
             var query = $(this).val().trim();
 
@@ -388,4 +341,11 @@ jQuery(document).ready(function ($) {
         }
         return mins + ' 分鐘';
     }
-});
+
+    // ============================================================
+    // 啟動：首次載入 + PJAX 切換
+    // ============================================================
+    $(document).ready(init);
+    $(document).on('pjax:end', init);
+
+})(jQuery);

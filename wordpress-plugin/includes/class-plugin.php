@@ -34,24 +34,6 @@ class Plugin {
 
     private function register_assets() {
         add_action('wp_enqueue_scripts', function () {
-            global $post;
-            if (!$post) return;
-
-            $shortcodes = [
-                'l4d2_leaderboard', 'l4d2_player_stats', 'l4d2_player_search',
-                'l4d2_weapons', 'l4d2_maps', 'l4d2_recent_sessions',
-                'l4d2_session_detail',
-            ];
-
-            $needs_assets = false;
-            foreach ($shortcodes as $sc) {
-                if (has_shortcode($post->post_content, $sc)) {
-                    $needs_assets = true;
-                    break;
-                }
-            }
-            if (!$needs_assets) return;
-
             // DataTables.js
             wp_enqueue_style('datatables-css',
                 'https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css',
