@@ -9,6 +9,7 @@ Left 4 Dead 2 玩家戰績追蹤系統。透過 SourceMod 插件自動記錄遊�
 - **武器統計** — 全伺服器武器使用排行，含擊殺數/爆頭數/命中率
 - **地圖統計** — 各戰役地圖遊玩次數、通關率、獨立玩家數
 - **場次記錄** — 每局遊戲的時間、地圖、難度、參與玩家、通關結果
+- **場次詳細** — 點進個別場次查看玩家表現、武器使用、道具使用、友軍傷害，搭配互動圖表（擊殺/傷害比較 + 武器分布甜甜圈圖）
 - **玩家搜尋** — 即時搜尋玩家名稱或 Steam ID
 - **遊戲內指令** — `!stats` `!rank` `!top` 直接在遊戲中查看
 
@@ -38,7 +39,8 @@ l4d2-stats/
 │   ├── configs/
 │   │   └── databases.cfg.example   # 資料庫連線設定範例
 │   └── sql/
-│       ├── schema.sql              # 資料表建立腳本
+│       ├── schema.sql              # 資料表建立腳本（含場次數據表）
+│       ├── migration_session_stats.sql # 場次數據表遷移腳本
 │       ├── seed_weapons.sql        # 武器預填資料
 │       └── seed_maps.sql           # 地圖預填資料
 │
@@ -52,7 +54,8 @@ l4d2-stats/
     │   ├── class-player.php            # 玩家個人頁 + 搜尋
     │   ├── class-weapons.php           # 武器統計
     │   ├── class-maps.php              # 地圖統計
-    │   └── class-sessions.php          # 場次記錄
+    │   ├── class-sessions.php          # 場次記錄
+    │   └── class-sessiondetail.php     # 場次詳細（含圖表）
     ├── templates/                  # HTML 模板
     └── assets/
         ├── css/l4d2-stats.css          # 深色主題樣式
@@ -81,7 +84,7 @@ l4d2-stats/
 3. 開啟 `sourcemod-plugin/sql/schema.sql` 檔案，複製**除了前三行**（`CREATE DATABASE` 和 `USE` 那兩行）以外的全部內容
    > 因為你已經手動建立並選取了資料庫，不需要再執行那兩行
 4. 貼到 SQL 輸入框中，點選 **「執行」**
-5. 應該會看到成功建立 8 張資料表的訊息
+5. 應該會看到成功建立 10 張資料表的訊息
 
 ### 1.3 填入武器資料
 
@@ -119,7 +122,7 @@ l4d2-stats/
 
 ### 1.6 驗證安裝
 
-在 phpMyAdmin 左側點選 `l4d2_stats`，確認能看到以下 8 張資料表：
+在 phpMyAdmin 左側點選 `l4d2_stats`，確認能看到以下 10 張資料表：
 
 | 資料表 | 用途 |
 |--------|------|
@@ -131,6 +134,8 @@ l4d2-stats/
 | `l4d2_player_stats` | 玩家累計數據 |
 | `l4d2_player_weapon_stats` | 各武器累計數據 |
 | `l4d2_player_map_stats` | 各地圖累計數據 |
+| `l4d2_session_player_stats` | 每場次每位玩家的數據 |
+| `l4d2_session_player_weapon_stats` | 每場次每位玩家各武器數據 |
 
 點選 `l4d2_weapons` 應能看到約 43 筆武器資料，`l4d2_maps` 應有約 55 筆地圖資料。
 
@@ -316,6 +321,15 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
   [l4d2_recent_sessions limit="50"]
   ```
 
+#### 頁面 6：場次詳細
+
+- 標題：`場次詳細`
+- **代稱（slug）務必設為：`session-detail`**（近期場次的連結會指向此頁面）
+- 內容：
+  ```
+  [l4d2_session_detail]
+  ```
+
 ### 3.5 更新固定網址
 
 1. 前往 **「設定」** → **「固定網址」**
@@ -334,6 +348,7 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 | `[l4d2_weapons]` | 武器使用排行 | `type`（篩選類型：pistol/smg/shotgun/rifle/sniper/heavy/melee/throwable） |
 | `[l4d2_maps]` | 地圖統計 | `campaign`（篩選戰役名稱，例如 `Dead Center`） |
 | `[l4d2_recent_sessions]` | 近期遊戲場次 | `limit`（筆數，預設 30） |
+| `[l4d2_session_detail]` | 場次詳細資訊（含圖表） | `session_id`（指定場次，或從 URL 自動取得） |
 
 **`sort_by` 可用的排序欄位：**
 `total_kills`、`kills_si`、`kills_tank`、`headshots`、`deaths`、`kd_ratio`、`accuracy`、`revives_given`、`heals_given`、`total_playtime`、`campaigns_completed`
@@ -387,6 +402,8 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 - 每張地圖的遊玩記錄（開始/結束時間、時長、難度）
 - 參與的玩家清單
 - 是否通關（地圖通關 / 戰役通關）
+- 每場次每位玩家的完整數據（擊殺/傷害/死亡/治療/道具使用等）
+- 每場次每位玩家的武器使用明細
 
 ### 數據寫入機制
 
@@ -397,6 +414,7 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 - **換圖時**自動寫入
 - **玩家離線時**立即寫入該玩家的數據
 - 所有資料庫操作皆使用非同步查詢（`SQL_TQuery`），不會造成遊戲卡頓
+- 採用**雙寫機制**：每次寫入同時更新累計數據表與場次數據表，確保場次詳細資訊可用
 
 ---
 
@@ -408,7 +426,7 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 
 **解決：**
 1. 登入 phpMyAdmin，確認 `l4d2_stats` 資料庫存在
-2. 點選該資料庫，確認有 8 張資料表
+2. 點選該資料庫，確認有 10 張資料表
 3. 如果沒有，重新執行 `schema.sql`
 4. 檢查 `wp-config.php` 中的 `L4D2_DB_NAME` 是否正確
 

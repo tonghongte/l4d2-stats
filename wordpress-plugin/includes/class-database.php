@@ -84,7 +84,9 @@ class Database {
             'l4d2_players', 'l4d2_maps', 'l4d2_weapons',
             'l4d2_sessions', 'l4d2_session_players',
             'l4d2_player_stats', 'l4d2_player_weapon_stats',
-            'l4d2_player_map_stats'
+            'l4d2_player_map_stats',
+            'l4d2_session_player_stats',
+            'l4d2_session_player_weapon_stats',
         ];
 
         $missing = [];

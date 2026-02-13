@@ -54,6 +54,27 @@ jQuery(document).ready(function ($) {
         );
     }
 
+    // 場次詳細 - 玩家表現
+    if ($('#l4d2-session-players-table').length) {
+        $('#l4d2-session-players-table').DataTable(
+            $.extend({}, dtDefaults, {
+                order: [[1, 'desc']],
+                paging: false,
+                searching: false,
+                info: false,
+            })
+        );
+    }
+
+    // 場次詳細 - 武器明細
+    if ($('#l4d2-session-weapons-table').length) {
+        $('#l4d2-session-weapons-table').DataTable(
+            $.extend({}, dtDefaults, {
+                order: [[3, 'desc']],
+            })
+        );
+    }
+
     // 通用可排序表格
     $('.l4d2-table.sortable').each(function () {
         if (!$.fn.DataTable.isDataTable(this)) {
@@ -77,6 +98,11 @@ jQuery(document).ready(function ($) {
 
         // 戰役遊玩次數圖表
         renderBarChart('#l4d2-campaign-chart', 'campaigns', '遊玩次數', 'plays');
+
+        // 場次詳細頁面圖表
+        renderSessionBarChart('#l4d2-session-kills-chart', '擊殺數');
+        renderSessionBarChart('#l4d2-session-damage-chart', '傷害量');
+        renderSessionDoughnutChart('#l4d2-session-weapon-chart');
     }
 
     function renderBarChart(selector, dataAttr, label, dataKey) {
@@ -131,6 +157,128 @@ jQuery(document).ready(function ($) {
                             color: '#999',
                             maxRotation: 45,
                             minRotation: 0,
+                        },
+                    },
+                },
+            },
+        });
+    }
+
+    // ============================================================
+    // 場次詳細頁面圖表
+    // ============================================================
+    var playerColors = [
+        'rgba(255, 68, 68, 0.8)',
+        'rgba(68, 138, 255, 0.8)',
+        'rgba(76, 175, 80, 0.8)',
+        'rgba(255, 193, 7, 0.8)',
+        'rgba(156, 39, 176, 0.8)',
+        'rgba(0, 188, 212, 0.8)',
+        'rgba(255, 87, 34, 0.8)',
+        'rgba(139, 195, 74, 0.8)',
+    ];
+
+    function renderSessionBarChart(selector, label) {
+        var el = document.querySelector(selector);
+        if (!el) return;
+
+        var chartData;
+        try {
+            chartData = JSON.parse(el.dataset.chart);
+        } catch (e) {
+            return;
+        }
+
+        if (!chartData.labels || chartData.labels.length === 0) return;
+
+        var bgColors = chartData.labels.map(function (_, i) {
+            return playerColors[i % playerColors.length];
+        });
+
+        new Chart(el.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: label,
+                    data: chartData.data,
+                    backgroundColor: bgColors,
+                    borderColor: bgColors.map(function (c) {
+                        return c.replace('0.8', '1');
+                    }),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }],
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: { color: '#333' },
+                        ticks: { color: '#999' },
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { color: '#ccc', font: { size: 14 } },
+                    },
+                },
+            },
+        });
+    }
+
+    function renderSessionDoughnutChart(selector) {
+        var el = document.querySelector(selector);
+        if (!el) return;
+
+        var chartData;
+        try {
+            chartData = JSON.parse(el.dataset.chart);
+        } catch (e) {
+            return;
+        }
+
+        if (!chartData.labels || chartData.labels.length === 0) return;
+
+        var doughnutColors = [
+            'rgba(255, 68, 68, 0.85)',
+            'rgba(68, 138, 255, 0.85)',
+            'rgba(76, 175, 80, 0.85)',
+            'rgba(255, 193, 7, 0.85)',
+            'rgba(156, 39, 176, 0.85)',
+            'rgba(0, 188, 212, 0.85)',
+            'rgba(255, 87, 34, 0.85)',
+            'rgba(139, 195, 74, 0.85)',
+            'rgba(233, 30, 99, 0.85)',
+            'rgba(121, 85, 72, 0.85)',
+        ];
+
+        new Chart(el.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    data: chartData.data,
+                    backgroundColor: doughnutColors.slice(0, chartData.labels.length),
+                    borderColor: '#1e1e1e',
+                    borderWidth: 2,
+                }],
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#ccc',
+                            padding: 12,
+                            font: { size: 12 },
                         },
                     },
                 },

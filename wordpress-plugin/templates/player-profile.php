@@ -186,7 +186,14 @@
         <tbody>
             <?php foreach ($sessions as $s): ?>
             <tr>
-                <td><?php echo date('Y-m-d H:i', strtotime($s->start_time)); ?></td>
+                <td>
+                    <a href="<?php echo esc_url(add_query_arg('session_id',
+                        (int)$s->session_id,
+                        get_permalink(get_page_by_path('session-detail'))
+                    )); ?>" class="l4d2-session-link">
+                        <?php echo date('Y-m-d H:i', strtotime($s->start_time)); ?>
+                    </a>
+                </td>
                 <td><?php echo esc_html($s->map_name); ?></td>
                 <td><?php echo esc_html($s->campaign_name); ?></td>
                 <td><?php echo esc_html(ucfirst($s->difficulty)); ?></td>

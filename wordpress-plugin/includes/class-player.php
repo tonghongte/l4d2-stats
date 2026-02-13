@@ -101,7 +101,8 @@ class Player {
 
         // 近期場次
         $sessions = $db->query(
-            "SELECT s.start_time, s.end_time, s.duration, s.completed,
+            "SELECT s.id AS session_id,
+                    s.start_time, s.end_time, s.duration, s.completed,
                     s.campaign_completed, s.difficulty,
                     m.display_name AS map_name, m.campaign_name,
                     sp.duration AS player_duration

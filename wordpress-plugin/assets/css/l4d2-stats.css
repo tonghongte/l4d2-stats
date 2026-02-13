@@ -418,11 +418,68 @@
 }
 
 /* ============================================================
+   Session Detail
+   ============================================================ */
+.l4d2-session-header {
+    margin-bottom: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    border: 1px solid #333;
+    border-radius: 10px;
+    border-left: 4px solid #ff4444;
+}
+
+.l4d2-session-map-name {
+    color: #fff;
+    margin: 0 0 8px;
+    font-size: 24px;
+}
+
+.l4d2-chart-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.l4d2-chart-half {
+    flex: 1;
+    min-width: 0;
+}
+
+.l4d2-chart-title {
+    color: #ff6b6b;
+    font-size: 14px;
+    margin: 0 0 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.l4d2-session-link {
+    color: #6bb5ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.l4d2-session-link:hover {
+    color: #99ccff;
+    text-decoration: underline;
+}
+
+.l4d2-ff-warning {
+    color: #ef9a9a;
+    font-weight: 600;
+}
+
+/* ============================================================
    Responsive
    ============================================================ */
 @media (max-width: 768px) {
     .l4d2-stat-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    .l4d2-chart-row {
+        flex-direction: column;
     }
 
     .l4d2-player-header {

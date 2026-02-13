@@ -28,6 +28,7 @@ class Plugin {
         add_shortcode('l4d2_weapons',         [Weapons::class, 'render']);
         add_shortcode('l4d2_maps',            [Maps::class, 'render']);
         add_shortcode('l4d2_recent_sessions', [Sessions::class, 'render']);
+        add_shortcode('l4d2_session_detail',  [SessionDetail::class, 'render']);
     }
 
     private function register_assets() {
@@ -38,6 +39,7 @@ class Plugin {
             $shortcodes = [
                 'l4d2_leaderboard', 'l4d2_player_stats', 'l4d2_player_search',
                 'l4d2_weapons', 'l4d2_maps', 'l4d2_recent_sessions',
+                'l4d2_session_detail',
             ];
 
             $needs_assets = false;
@@ -72,9 +74,10 @@ class Plugin {
 
             // 傳遞 AJAX 參數到 JS
             wp_localize_script('l4d2-stats-js', 'l4d2Stats', [
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce'    => wp_create_nonce('l4d2_stats_nonce'),
-                'player_page' => $this->get_player_page_url(),
+                'ajax_url'     => admin_url('admin-ajax.php'),
+                'nonce'        => wp_create_nonce('l4d2_stats_nonce'),
+                'player_page'  => $this->get_player_page_url(),
+                'session_page' => $this->get_session_page_url(),
             ]);
         });
     }
@@ -92,10 +95,16 @@ class Plugin {
                 'index.php?pagename=player-stats&steam_id=$matches[1]',
                 'top'
             );
+            add_rewrite_rule(
+                'stats/session/(\d+)/?$',
+                'index.php?pagename=session-detail&session_id=$matches[1]',
+                'top'
+            );
         });
 
         add_filter('query_vars', function ($vars) {
             $vars[] = 'steam_id';
+            $vars[] = 'session_id';
             return $vars;
         });
     }
@@ -105,6 +114,17 @@ class Plugin {
      */
     private function get_player_page_url() {
         $page = get_page_by_path('player-stats');
+        if ($page) {
+            return get_permalink($page);
+        }
+        return home_url('/');
+    }
+
+    /**
+     * 取得場次詳細頁面的 URL
+     */
+    private function get_session_page_url() {
+        $page = get_page_by_path('session-detail');
         if ($page) {
             return get_permalink($page);
         }

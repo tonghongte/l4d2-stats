@@ -32,7 +32,7 @@ public Plugin myinfo = {
 // ============================================================
 #define FLUSH_INTERVAL      120.0   // 每2分鐘寫入一次資料庫
 #define MAX_WEAPON_NAME     64
-#define MAX_QUERY_LENGTH    2048
+#define MAX_QUERY_LENGTH    4096
 #define TEAM_SURVIVOR       2
 #define TEAM_INFECTED       3
 
@@ -112,6 +112,10 @@ Handle g_hFlushTimer = null;
 ConVar g_cvEnabled;
 ConVar g_cvMinPlaytime;
 
+// 地圖名稱對照表 (從 MapChanger.l4d2.txt 載入)
+StringMap g_MapDisplayNames;   // map_name -> display_name
+StringMap g_MapCampaignNames;  // map_name -> campaign_name
+
 // ============================================================
 // Include Files
 // ============================================================
@@ -161,6 +165,11 @@ public void OnPluginStart()
     RegConsoleCmd("sm_top",   Cmd_ShowTop,   "顯示排行榜");
 
     AutoExecConfig(true, "l4d2_stats");
+
+    // 載入自訂地圖名稱對照表
+    g_MapDisplayNames = new StringMap();
+    g_MapCampaignNames = new StringMap();
+    LoadMapNamesFromConfig();
 
     // Late load: 載入已連線的玩家
     for (int i = 1; i <= MaxClients; i++)
@@ -299,4 +308,68 @@ void FlushAllPlayerStats()
             FlushPlayerWeaponStats(i);
         }
     }
+}
+
+// 從 MapChanger.l4d2.txt 載入自訂地圖名稱
+void LoadMapNamesFromConfig()
+{
+    char configPath[PLATFORM_MAX_PATH];
+    BuildPath(Path_SM, configPath, sizeof(configPath), "configs/MapChanger.l4d2.txt");
+
+    if (!FileExists(configPath))
+    {
+        LogMessage("[L4D2 Stats] 找不到地圖名稱設定檔: %s", configPath);
+        return;
+    }
+
+    KeyValues kv = new KeyValues("campaigns");
+    if (!kv.ImportFromFile(configPath))
+    {
+        LogError("[L4D2 Stats] 無法解析地圖名稱設定檔: %s", configPath);
+        delete kv;
+        return;
+    }
+
+    int count = 0;
+    char campaignName[128], mapName[64], displayName[128];
+
+    // 遍歷每個戰役 (第一層子節點)
+    if (kv.GotoFirstSubKey())
+    {
+        do
+        {
+            kv.GetSectionName(campaignName, sizeof(campaignName));
+
+            // 進入 "coop" 區段
+            if (kv.JumpToKey("coop"))
+            {
+                // 遍歷每個地圖編號 ("1", "2", ...)
+                if (kv.GotoFirstSubKey())
+                {
+                    do
+                    {
+                        kv.GetString("Map", mapName, sizeof(mapName), "");
+                        kv.GetString("DisplayName", displayName, sizeof(displayName), "");
+
+                        if (mapName[0] != '\0')
+                        {
+                            g_MapCampaignNames.SetString(mapName, campaignName);
+                            if (displayName[0] != '\0')
+                            {
+                                g_MapDisplayNames.SetString(mapName, displayName);
+                            }
+                            count++;
+                        }
+                    }
+                    while (kv.GotoNextKey());
+                    kv.GoBack(); // 回到 "coop"
+                }
+                kv.GoBack(); // 回到戰役
+            }
+        }
+        while (kv.GotoNextKey());
+    }
+
+    delete kv;
+    LogMessage("[L4D2 Stats] 從設定檔載入了 %d 個地圖名稱", count);
 }

@@ -140,8 +140,29 @@ void EnsureMapExists(const char[] mapName)
 {
     if (!g_bDatabaseReady) return;
 
-    char query[512];
-    FormatEx(query, sizeof(query), "INSERT INTO l4d2_maps (map_name, first_played, last_played) VALUES ('%s', NOW(), NOW()) ON DUPLICATE KEY UPDATE last_played = NOW(), times_played = times_played + 1", mapName);
+    // 從設定檔查找地圖名稱
+    char displayName[128], campaignName[128];
+    char escapedDisplay[257], escapedCampaign[257];
+    escapedDisplay[0] = '\0';
+    escapedCampaign[0] = '\0';
+
+    bool hasDisplay = g_MapDisplayNames.GetString(mapName, displayName, sizeof(displayName));
+    bool hasCampaign = g_MapCampaignNames.GetString(mapName, campaignName, sizeof(campaignName));
+
+    if (hasDisplay)
+        g_hDatabase.Escape(displayName, escapedDisplay, sizeof(escapedDisplay));
+    if (hasCampaign)
+        g_hDatabase.Escape(campaignName, escapedCampaign, sizeof(escapedCampaign));
+
+    char query[1024];
+    if (hasDisplay || hasCampaign)
+    {
+        FormatEx(query, sizeof(query), "INSERT INTO l4d2_maps (map_name, display_name, campaign_name, first_played, last_played) VALUES ('%s', '%s', '%s', NOW(), NOW()) ON DUPLICATE KEY UPDATE last_played = NOW(), times_played = times_played + 1, display_name = IF(display_name IS NULL OR display_name = '', VALUES(display_name), display_name), campaign_name = IF(campaign_name IS NULL OR campaign_name = '', VALUES(campaign_name), campaign_name)", mapName, escapedDisplay, escapedCampaign);
+    }
+    else
+    {
+        FormatEx(query, sizeof(query), "INSERT INTO l4d2_maps (map_name, first_played, last_played) VALUES ('%s', NOW(), NOW()) ON DUPLICATE KEY UPDATE last_played = NOW(), times_played = times_played + 1", mapName);
+    }
 
     g_hDatabase.Query(OnMapEnsured, query);
 }
@@ -209,6 +230,25 @@ void FlushPlayerStats(int client)
 
     g_hDatabase.Query(OnGenericQuery, query);
 
+    // 寫入場次數據
+    if (g_bSessionActive && g_iSessionId > 0)
+    {
+        char sessionQuery[MAX_QUERY_LENGTH];
+        FormatEx(sessionQuery, sizeof(sessionQuery), "INSERT INTO l4d2_session_player_stats (session_id, player_id, kills_infected, kills_si, kills_witch, kills_tank, headshots, damage_dealt, damage_taken, deaths, incaps, revives_given, revives_received, heals_given, heals_received, health_restored, pills_used, adrenaline_used, defibs_used, friendly_fire_dealt, friendly_fire_damage, shots_fired, shots_hit, melee_swings, melee_hits) VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d) ON DUPLICATE KEY UPDATE kills_infected=kills_infected+VALUES(kills_infected), kills_si=kills_si+VALUES(kills_si), kills_witch=kills_witch+VALUES(kills_witch), kills_tank=kills_tank+VALUES(kills_tank), headshots=headshots+VALUES(headshots), damage_dealt=damage_dealt+VALUES(damage_dealt), damage_taken=damage_taken+VALUES(damage_taken), deaths=deaths+VALUES(deaths), incaps=incaps+VALUES(incaps), revives_given=revives_given+VALUES(revives_given), revives_received=revives_received+VALUES(revives_received), heals_given=heals_given+VALUES(heals_given), heals_received=heals_received+VALUES(heals_received), health_restored=health_restored+VALUES(health_restored), pills_used=pills_used+VALUES(pills_used), adrenaline_used=adrenaline_used+VALUES(adrenaline_used), defibs_used=defibs_used+VALUES(defibs_used), friendly_fire_dealt=friendly_fire_dealt+VALUES(friendly_fire_dealt), friendly_fire_damage=friendly_fire_damage+VALUES(friendly_fire_damage), shots_fired=shots_fired+VALUES(shots_fired), shots_hit=shots_hit+VALUES(shots_hit), melee_swings=melee_swings+VALUES(melee_swings), melee_hits=melee_hits+VALUES(melee_hits)",
+            g_iSessionId, g_iPlayerDbId[client],
+            stats.kills_infected, stats.kills_si, stats.kills_witch, stats.kills_tank,
+            stats.headshots, stats.damage_dealt, stats.damage_taken,
+            stats.deaths, stats.incaps,
+            stats.revives_given, stats.revives_received,
+            stats.heals_given, stats.heals_received, stats.health_restored,
+            stats.pills_used, stats.adrenaline_used, stats.defibs_used,
+            stats.ff_dealt, stats.ff_damage,
+            stats.shots_fired, stats.shots_hit,
+            stats.melee_swings, stats.melee_hits);
+
+        g_hDatabase.Query(OnGenericQuery, sessionQuery);
+    }
+
     // 重設緩衝
     PlayerStatBuffer empty;
     g_PlayerStats[client] = empty;
@@ -245,6 +285,18 @@ void FlushPlayerWeaponStats(int client)
             escapedWeapon);
 
         g_hDatabase.Query(OnGenericQuery, query);
+
+        // 寫入場次武器數據
+        if (g_bSessionActive && g_iSessionId > 0)
+        {
+            char sessionWepQuery[1024];
+            FormatEx(sessionWepQuery, sizeof(sessionWepQuery), "INSERT INTO l4d2_session_player_weapon_stats (session_id, player_id, weapon_id, kills, headshots, damage_dealt, shots_fired, shots_hit) SELECT %d, %d, w.id, %d, %d, %d, %d, %d FROM l4d2_weapons w WHERE w.weapon_name='%s' ON DUPLICATE KEY UPDATE kills=kills+VALUES(kills), headshots=headshots+VALUES(headshots), damage_dealt=damage_dealt+VALUES(damage_dealt), shots_fired=shots_fired+VALUES(shots_fired), shots_hit=shots_hit+VALUES(shots_hit)",
+                g_iSessionId, g_iPlayerDbId[client],
+                values[0], values[1], values[2], values[3], values[4],
+                escapedWeapon);
+
+            g_hDatabase.Query(OnGenericQuery, sessionWepQuery);
+        }
     }
 
     delete snap;

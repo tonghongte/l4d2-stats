@@ -1,0 +1,227 @@
+<?php if (!defined('ABSPATH')) exit; ?>
+<div class="l4d2-stats-container">
+
+    <!-- 場次標題 -->
+    <h2 class="l4d2-title">場次詳細資訊</h2>
+
+    <!-- 場次基本資料卡 -->
+    <div class="l4d2-session-header">
+        <div class="l4d2-session-info">
+            <h3 class="l4d2-session-map-name">
+                <?php echo esc_html($session->map_name ?: '未知地圖'); ?>
+                <?php if ($session->is_finale): ?>
+                    <span class="l4d2-badge l4d2-badge-gold">Finale</span>
+                <?php endif; ?>
+            </h3>
+            <div class="l4d2-player-meta">
+                <span>戰役: <?php echo esc_html($session->campaign_name); ?></span>
+                <span>難度:
+                    <span class="l4d2-difficulty l4d2-diff-<?php echo esc_attr($session->difficulty); ?>">
+                        <?php echo esc_html($difficulty_labels[$session->difficulty] ?? ucfirst($session->difficulty)); ?>
+                    </span>
+                </span>
+                <span>人數: <?php echo (int)$session->survivor_count; ?></span>
+            </div>
+            <div class="l4d2-player-meta">
+                <span>開始: <?php echo date('Y-m-d H:i:s', strtotime($session->start_time)); ?></span>
+                <?php if ($session->end_time): ?>
+                    <span>結束: <?php echo date('Y-m-d H:i:s', strtotime($session->end_time)); ?></span>
+                <?php endif; ?>
+                <span>時長: <?php echo \L4D2Stats\Plugin::format_playtime($session->duration); ?></span>
+            </div>
+            <div class="l4d2-player-meta" style="margin-top: 8px;">
+                <?php if ($session->campaign_completed): ?>
+                    <span class="l4d2-badge l4d2-badge-gold">戰役通關</span>
+                <?php elseif ($session->completed): ?>
+                    <span class="l4d2-badge l4d2-badge-success">通關</span>
+                <?php else: ?>
+                    <span class="l4d2-badge l4d2-badge-fail">未通關</span>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <?php if (!$has_stats): ?>
+        <div class="l4d2-notice">
+            此場次尚無詳細數據。場次數據功能需要更新 SourceMod 插件後的新場次才會記錄。
+        </div>
+    <?php endif; ?>
+
+    <!-- 圖表區 -->
+    <?php if ($has_stats && !empty($chart_kills_data) && array_sum($chart_kills_data) > 0): ?>
+    <div class="l4d2-chart-row">
+        <!-- 玩家擊殺比較 -->
+        <div class="l4d2-chart-container l4d2-chart-half">
+            <h4 class="l4d2-chart-title">玩家擊殺比較</h4>
+            <canvas id="l4d2-session-kills-chart"
+                    data-chart='<?php echo esc_attr(json_encode([
+                        'labels' => $chart_kills_labels,
+                        'data'   => $chart_kills_data,
+                    ])); ?>'
+                    height="250"></canvas>
+        </div>
+        <!-- 玩家傷害比較 -->
+        <div class="l4d2-chart-container l4d2-chart-half">
+            <h4 class="l4d2-chart-title">玩家傷害比較</h4>
+            <canvas id="l4d2-session-damage-chart"
+                    data-chart='<?php echo esc_attr(json_encode([
+                        'labels' => $chart_damage_labels,
+                        'data'   => $chart_damage_data,
+                    ])); ?>'
+                    height="250"></canvas>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (!empty($chart_weapon_data) && array_sum($chart_weapon_data) > 0): ?>
+    <div class="l4d2-chart-container">
+        <h4 class="l4d2-chart-title">武器使用分布</h4>
+        <canvas id="l4d2-session-weapon-chart"
+                data-chart='<?php echo esc_attr(json_encode([
+                    'labels' => $chart_weapon_labels,
+                    'data'   => $chart_weapon_data,
+                ])); ?>'
+                height="300"></canvas>
+    </div>
+    <?php endif; ?>
+
+    <!-- 玩家數據表 -->
+    <?php if (!empty($players)): ?>
+    <h3 class="l4d2-section-title">玩家表現</h3>
+    <table id="l4d2-session-players-table" class="l4d2-table display">
+        <thead>
+            <tr>
+                <th>玩家</th>
+                <th>總擊殺</th>
+                <th>特感</th>
+                <th>Witch</th>
+                <th>Tank</th>
+                <th>爆頭</th>
+                <th>傷害</th>
+                <th>承受傷害</th>
+                <th>死亡</th>
+                <th>倒地</th>
+                <th>命中率</th>
+                <th>友傷</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($players as $p): ?>
+            <tr>
+                <td>
+                    <a href="<?php echo esc_url(add_query_arg('steam_id',
+                        urlencode($p->steam_id),
+                        get_permalink(get_page_by_path('player-stats'))
+                    )); ?>" class="l4d2-player-link">
+                        <?php echo esc_html($p->name); ?>
+                    </a>
+                </td>
+                <td data-order="<?php echo (int)$p->total_kills; ?>">
+                    <?php echo number_format((int)$p->total_kills); ?>
+                </td>
+                <td><?php echo number_format((int)$p->kills_si); ?></td>
+                <td><?php echo (int)$p->kills_witch; ?></td>
+                <td><?php echo (int)$p->kills_tank; ?></td>
+                <td data-order="<?php echo (int)$p->headshots; ?>">
+                    <?php echo number_format((int)$p->headshots); ?>
+                </td>
+                <td data-order="<?php echo (int)$p->damage_dealt; ?>">
+                    <?php echo number_format((int)$p->damage_dealt); ?>
+                </td>
+                <td data-order="<?php echo (int)$p->damage_taken; ?>">
+                    <?php echo number_format((int)$p->damage_taken); ?>
+                </td>
+                <td><?php echo (int)$p->deaths; ?></td>
+                <td><?php echo (int)$p->incaps; ?></td>
+                <td><?php echo $p->accuracy; ?>%</td>
+                <td>
+                    <?php $ff = (int)$p->friendly_fire_damage; ?>
+                    <?php if ($ff > 0): ?>
+                        <span class="l4d2-ff-warning"><?php echo number_format($ff); ?></span>
+                    <?php else: ?>
+                        0
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <!-- 團隊互助 / 道具使用 -->
+    <h3 class="l4d2-section-title">團隊互助 / 道具使用</h3>
+    <table class="l4d2-table display">
+        <thead>
+            <tr>
+                <th>玩家</th>
+                <th>救援</th>
+                <th>被救</th>
+                <th>治療</th>
+                <th>被治療</th>
+                <th>治療量</th>
+                <th>藥丸</th>
+                <th>腎上腺素</th>
+                <th>電擊器</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($players as $p): ?>
+            <tr>
+                <td><?php echo esc_html($p->name); ?></td>
+                <td><?php echo (int)$p->revives_given; ?></td>
+                <td><?php echo (int)$p->revives_received; ?></td>
+                <td><?php echo (int)$p->heals_given; ?></td>
+                <td><?php echo (int)$p->heals_received; ?></td>
+                <td><?php echo number_format((int)$p->health_restored); ?></td>
+                <td><?php echo (int)$p->pills_used; ?></td>
+                <td><?php echo (int)$p->adrenaline_used; ?></td>
+                <td><?php echo (int)$p->defibs_used; ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+
+    <!-- 武器明細表 -->
+    <?php if (!empty($weapons)): ?>
+    <h3 class="l4d2-section-title">武器使用明細</h3>
+    <table id="l4d2-session-weapons-table" class="l4d2-table display">
+        <thead>
+            <tr>
+                <th>玩家</th>
+                <th>武器</th>
+                <th>類型</th>
+                <th>擊殺</th>
+                <th>爆頭</th>
+                <th>傷害</th>
+                <th>射擊</th>
+                <th>命中</th>
+                <th>命中率</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($weapons as $w): ?>
+            <tr>
+                <td><?php echo esc_html($w->player_name); ?></td>
+                <td><?php echo esc_html($w->weapon_name); ?></td>
+                <td>
+                    <span class="l4d2-weapon-type l4d2-type-<?php echo esc_attr($w->weapon_type); ?>">
+                        <?php echo esc_html($w->weapon_type); ?>
+                    </span>
+                </td>
+                <td data-order="<?php echo (int)$w->kills; ?>">
+                    <?php echo number_format((int)$w->kills); ?>
+                </td>
+                <td><?php echo number_format((int)$w->headshots); ?></td>
+                <td data-order="<?php echo (int)$w->damage_dealt; ?>">
+                    <?php echo number_format((int)$w->damage_dealt); ?>
+                </td>
+                <td><?php echo number_format((int)$w->shots_fired); ?></td>
+                <td><?php echo number_format((int)$w->shots_hit); ?></td>
+                <td><?php echo $w->accuracy; ?>%</td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+    <?php endif; ?>
+
+</div>
