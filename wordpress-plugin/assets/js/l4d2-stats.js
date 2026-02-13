@@ -110,13 +110,6 @@
         renderSessionDoughnutChart('#l4d2-session-weapon-chart');
     }
 
-    function fixChartContainer(el, height) {
-        var container = el.parentNode;
-        container.style.position = 'relative';
-        container.style.height = height + 'px';
-        container.style.overflow = 'hidden';
-    }
-
     function renderBarChart(selector, dataAttr, label, dataKey) {
         var el = document.querySelector(selector);
         if (!el) return;
@@ -130,8 +123,6 @@
         var labels = chartData.labels || [];
         var values = chartData[dataKey] || chartData.kills || chartData.plays || [];
         if (labels.length === 0) return;
-
-        fixChartContainer(el, 340);
 
         chartInstances.push(new Chart(el.getContext('2d'), {
             type: 'bar',
@@ -148,7 +139,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                aspectRatio: 2.5,
                 plugins: { legend: { display: false } },
                 scales: {
                     y: {
@@ -173,8 +164,6 @@
         try { chartData = JSON.parse(el.dataset.chart); } catch (e) { return; }
         if (!chartData.labels || chartData.labels.length === 0) return;
 
-        fixChartContainer(el, 290);
-
         var bgColors = chartData.labels.map(function (_, i) {
             return playerColors[i % playerColors.length];
         });
@@ -197,7 +186,7 @@
             options: {
                 indexAxis: 'y',
                 responsive: true,
-                maintainAspectRatio: false,
+                aspectRatio: 1.8,
                 plugins: { legend: { display: false } },
                 scales: {
                     x: {
@@ -222,8 +211,6 @@
         try { chartData = JSON.parse(el.dataset.chart); } catch (e) { return; }
         if (!chartData.labels || chartData.labels.length === 0) return;
 
-        fixChartContainer(el, 340);
-
         chartInstances.push(new Chart(el.getContext('2d'), {
             type: 'doughnut',
             data: {
@@ -237,7 +224,7 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                aspectRatio: 2,
                 plugins: {
                     legend: {
                         position: 'right',
