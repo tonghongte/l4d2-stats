@@ -287,7 +287,7 @@ jQuery(document).ready(function ($) {
     }
 
     // ============================================================
-    // 玩家搜尋 AJAX
+    // 玩家搜尋 (REST API)
     // ============================================================
     var searchTimer;
     var $searchInput = $('#l4d2-player-search-input');
@@ -306,22 +306,14 @@ jQuery(document).ready(function ($) {
             $searchResults.html('<div class="l4d2-search-loading">搜尋中...</div>');
 
             searchTimer = setTimeout(function () {
-                $.post(
-                    l4d2Stats.ajax_url,
-                    {
-                        action: 'l4d2_search_player',
-                        nonce: l4d2Stats.nonce,
-                        search: query,
+                $.ajax({
+                    url: l4d2Stats.rest_url + 'search',
+                    method: 'GET',
+                    data: { q: query },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('X-WP-Nonce', l4d2Stats.nonce);
                     },
-                    function (response) {
-                        if (!response.success) {
-                            $searchResults.html(
-                                '<div class="l4d2-notice">搜尋失敗</div>'
-                            );
-                            return;
-                        }
-
-                        var data = response.data;
+                    success: function (data) {
                         if (!data || data.length === 0) {
                             $searchResults.html(
                                 '<div class="l4d2-notice">找不到玩家</div>'
@@ -353,8 +345,13 @@ jQuery(document).ready(function ($) {
                         });
 
                         $searchResults.html(html);
-                    }
-                );
+                    },
+                    error: function () {
+                        $searchResults.html(
+                            '<div class="l4d2-notice">搜尋失敗</div>'
+                        );
+                    },
+                });
             }, 300);
         });
     }

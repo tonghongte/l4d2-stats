@@ -18,6 +18,7 @@ class Plugin {
         $this->register_shortcodes();
         $this->register_assets();
         $this->register_ajax();
+        $this->register_rest_api();
         $this->register_rewrite_rules();
     }
 
@@ -72,10 +73,10 @@ class Plugin {
                 L4D2_STATS_URL . 'assets/js/l4d2-stats.js',
                 ['jquery', 'datatables-js', 'chartjs'], L4D2_STATS_VERSION, true);
 
-            // 傳遞 AJAX 參數到 JS
+            // 傳遞參數到 JS
             wp_localize_script('l4d2-stats-js', 'l4d2Stats', [
-                'ajax_url'     => admin_url('admin-ajax.php'),
-                'nonce'        => wp_create_nonce('l4d2_stats_nonce'),
+                'rest_url'     => rest_url('l4d2-stats/v1/'),
+                'nonce'        => wp_create_nonce('wp_rest'),
                 'player_page'  => $this->get_player_page_url(),
                 'session_page' => $this->get_session_page_url(),
             ]);
@@ -83,9 +84,23 @@ class Plugin {
     }
 
     private function register_ajax() {
-        // 玩家搜尋
-        add_action('wp_ajax_l4d2_search_player', [Player::class, 'ajax_search']);
-        add_action('wp_ajax_nopriv_l4d2_search_player', [Player::class, 'ajax_search']);
+        // 保留供舊版快取相容，新版已改用 REST API
+    }
+
+    private function register_rest_api() {
+        add_action('rest_api_init', function () {
+            register_rest_route('l4d2-stats/v1', '/search', [
+                'methods'             => 'GET',
+                'callback'            => [Player::class, 'rest_search'],
+                'permission_callback' => '__return_true',
+                'args'                => [
+                    'q' => [
+                        'required'          => true,
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                ],
+            ]);
+        });
     }
 
     private function register_rewrite_rules() {

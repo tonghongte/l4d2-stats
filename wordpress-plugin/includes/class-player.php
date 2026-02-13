@@ -138,14 +138,12 @@ class Player {
     }
 
     /**
-     * AJAX 玩家搜尋
+     * REST API 玩家搜尋
      */
-    public static function ajax_search() {
-        check_ajax_referer('l4d2_stats_nonce', 'nonce');
-
-        $search = sanitize_text_field(wp_unslash($_POST['search'] ?? ''));
+    public static function rest_search(\WP_REST_Request $request) {
+        $search = $request->get_param('q');
         if (strlen($search) < 2) {
-            wp_send_json_error('搜尋字串太短');
+            return new \WP_Error('too_short', '搜尋字串太短', ['status' => 400]);
         }
 
         $db = Database::instance();
@@ -159,6 +157,6 @@ class Player {
              '%' . $db->get_db()->esc_like($search) . '%']
         );
 
-        wp_send_json_success($results);
+        return rest_ensure_response($results);
     }
 }
