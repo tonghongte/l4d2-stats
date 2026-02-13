@@ -8,28 +8,28 @@
         $from_sid = isset($_GET['sid']) ? intval($_GET['sid']) : 0;
         switch ($from) {
             case 'search':
-                $search_page = get_page_by_path('player-search');
-                if ($search_page): ?>
-                    <a href="<?php echo get_permalink($search_page); ?>">玩家搜尋</a>
+                $search_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_player_search');
+                if ($search_url): ?>
+                    <a href="<?php echo esc_url($search_url); ?>">玩家搜尋</a>
                 <?php else: ?>
                     <span>玩家搜尋</span>
                 <?php endif;
                 break;
             case 'session':
-                $sessions_page = get_page_by_path('sessions');
-                if ($sessions_page): ?>
-                    <a href="<?php echo get_permalink($sessions_page); ?>">場次列表</a>
+                $sessions_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_recent_sessions');
+                if ($sessions_url): ?>
+                    <a href="<?php echo esc_url($sessions_url); ?>">場次列表</a>
                 <?php endif;
-                if ($from_sid > 0): ?>
+                if ($from_sid > 0):
+                    $detail_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_session_detail'); ?>
                     <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
-                    <a href="<?php echo esc_url(add_query_arg('session_id', $from_sid,
-                        get_permalink(get_page_by_path('session-detail')))); ?>">場次詳情</a>
+                    <a href="<?php echo esc_url(add_query_arg('session_id', $from_sid, $detail_url)); ?>">場次詳情</a>
                 <?php endif;
                 break;
             default: // leaderboard or no from
-                $lb_page = get_page_by_path('leaderboard');
-                if ($lb_page): ?>
-                    <a href="<?php echo get_permalink($lb_page); ?>">排行榜</a>
+                $lb_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_leaderboard');
+                if ($lb_url): ?>
+                    <a href="<?php echo esc_url($lb_url); ?>">排行榜</a>
                 <?php else: ?>
                     <span>排行榜</span>
                 <?php endif;

@@ -133,6 +133,30 @@ class Plugin {
     }
 
     /**
+     * 透過 shortcode 查找包含該 shortcode 的頁面 URL
+     * 結果會快取在靜態變數中避免重複查詢
+     */
+    public static function get_page_url_by_shortcode($shortcode) {
+        static $cache = [];
+        if (isset($cache[$shortcode])) {
+            return $cache[$shortcode];
+        }
+
+        global $wpdb;
+        $page_id = $wpdb->get_var($wpdb->prepare(
+            "SELECT ID FROM {$wpdb->posts}
+             WHERE post_type = 'page' AND post_status = 'publish'
+             AND post_content LIKE %s
+             LIMIT 1",
+            '%[' . $wpdb->esc_like($shortcode) . '%'
+        ));
+
+        $url = $page_id ? get_permalink($page_id) : '';
+        $cache[$shortcode] = $url;
+        return $url;
+    }
+
+    /**
      * 格式化遊玩時間
      */
     public static function format_playtime($seconds) {

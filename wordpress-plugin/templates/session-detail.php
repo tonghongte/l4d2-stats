@@ -8,25 +8,21 @@
         $bc_pid = isset($_GET['pid']) ? sanitize_text_field($_GET['pid']) : '';
         $bc_pname = isset($_GET['pname']) ? sanitize_text_field($_GET['pname']) : '';
 
-        if ($bc_from === 'player' && !empty($bc_pid)): ?>
-            <a href="<?php echo esc_url(add_query_arg('steam_id',
-                urlencode($bc_pid),
-                get_permalink(get_page_by_path('player-stats'))
-            )); ?>"><?php echo esc_html($bc_pname ?: $bc_pid); ?></a>
+        if ($bc_from === 'player' && !empty($bc_pid)):
+            $player_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_player_stats'); ?>
+            <a href="<?php echo esc_url(add_query_arg('steam_id', urlencode($bc_pid), $player_url)); ?>"><?php echo esc_html($bc_pname ?: $bc_pid); ?></a>
         <?php else:
-            $sessions_page = get_page_by_path('sessions');
-            if ($sessions_page): ?>
-                <a href="<?php echo get_permalink($sessions_page); ?>">場次列表</a>
+            $sessions_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_recent_sessions');
+            if ($sessions_url): ?>
+                <a href="<?php echo esc_url($sessions_url); ?>">場次列表</a>
             <?php else: ?>
                 <span>場次列表</span>
             <?php endif;
         endif; ?>
         <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
-        <?php if (!empty($campaign_run_id)): ?>
-            <a href="<?php echo esc_url(add_query_arg('session_id',
-                (int)$campaign_run_id,
-                get_permalink(get_page_by_path('session-detail'))
-            )); ?>">
+        <?php if (!empty($campaign_run_id)):
+            $detail_url = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_session_detail'); ?>
+            <a href="<?php echo esc_url(add_query_arg('session_id', (int)$campaign_run_id, $detail_url)); ?>">
                 <?php echo esc_html($session->campaign_name); ?>
             </a>
             <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
