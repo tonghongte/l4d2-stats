@@ -70,6 +70,7 @@
         if (!$.fn.DataTable) return;
         initDT('#l4d2-leaderboard', { order: [[2, 'desc']] });
         initDT('#l4d2-weapons-table', { order: [[3, 'desc']] });
+        initDT('#l4d2-maps-table', { order: [[2, 'desc']] });
         initDT('#l4d2-sessions-table', { order: [[0, 'desc']], pageLength: 20 });
         initDT('#l4d2-session-players-table', {
             order: [[1, 'desc']], paging: false, searching: false, info: false,

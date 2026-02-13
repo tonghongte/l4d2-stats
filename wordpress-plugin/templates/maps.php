@@ -2,7 +2,7 @@
 <div class="l4d2-stats-container">
     <h2 class="l4d2-title">地圖統計</h2>
 
-    <?php if (empty($maps)): ?>
+    <?php if (empty($campaigns)): ?>
         <div class="l4d2-notice">尚無地圖數據。</div>
     <?php else: ?>
 
@@ -16,41 +16,47 @@
                     height="300"></canvas>
         </div>
 
-        <?php foreach ($campaigns as $campaign_name => $campaign_maps): ?>
-        <h3 class="l4d2-section-title"><?php echo esc_html($campaign_name); ?></h3>
-        <table class="l4d2-table sortable display">
+        <table id="l4d2-maps-table" class="l4d2-table display">
             <thead>
                 <tr>
-                    <th>地圖</th>
-                    <th>遊玩次數</th>
-                    <th>通關次數</th>
+                    <th>戰役</th>
+                    <th>章節數</th>
+                    <th>總遊玩次數</th>
+                    <th>總通關次數</th>
                     <th>通關率</th>
                     <th>獨立玩家數</th>
                     <th>最後遊玩</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($campaign_maps as $m): ?>
+                <?php foreach ($campaigns as $c): ?>
                 <tr>
                     <td>
-                        <?php echo esc_html($m->display_name ?: $m->map_name); ?>
-                        <?php if ($m->is_finale): ?>
-                            <span class="l4d2-badge l4d2-badge-gold">Finale</span>
-                        <?php endif; ?>
+                        <a href="<?php echo esc_url(add_query_arg('campaign',
+                            urlencode($c->campaign_name),
+                            get_permalink()
+                        )); ?>" class="l4d2-campaign-link">
+                            <?php echo esc_html($c->campaign_name); ?>
+                        </a>
                     </td>
-                    <td><?php echo number_format((int)$m->times_played); ?></td>
-                    <td><?php echo number_format((int)$m->times_completed); ?></td>
-                    <td>
+                    <td><?php echo (int)$c->chapter_count; ?></td>
+                    <td data-order="<?php echo (int)$c->total_plays; ?>">
+                        <?php echo number_format((int)$c->total_plays); ?>
+                    </td>
+                    <td data-order="<?php echo (int)$c->total_completions; ?>">
+                        <?php echo number_format((int)$c->total_completions); ?>
+                    </td>
+                    <td data-order="<?php echo $c->avg_completion_rate; ?>">
                         <div class="l4d2-progress-bar">
-                            <div class="l4d2-progress-fill" style="width: <?php echo min(100, $m->completion_rate); ?>%">
-                                <?php echo $m->completion_rate; ?>%
+                            <div class="l4d2-progress-fill" style="width: <?php echo min(100, $c->avg_completion_rate); ?>%">
+                                <?php echo $c->avg_completion_rate; ?>%
                             </div>
                         </div>
                     </td>
-                    <td><?php echo (int)$m->unique_players; ?></td>
-                    <td>
-                        <?php if ($m->last_played): ?>
-                            <?php echo human_time_diff(strtotime($m->last_played)); ?> 前
+                    <td><?php echo (int)$c->unique_players; ?></td>
+                    <td data-order="<?php echo $c->last_played ? strtotime($c->last_played) : 0; ?>">
+                        <?php if ($c->last_played): ?>
+                            <?php echo human_time_diff(strtotime($c->last_played)); ?> 前
                         <?php else: ?>
                             -
                         <?php endif; ?>
@@ -59,7 +65,6 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
-        <?php endforeach; ?>
 
     <?php endif; ?>
 </div>

@@ -106,6 +106,7 @@ class Plugin {
             $vars[] = 'sid';
             $vars[] = 'pid';
             $vars[] = 'pname';
+            $vars[] = 'campaign';
             return $vars;
         });
     }
