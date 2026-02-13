@@ -58,15 +58,16 @@
     // 主要初始化函式（首次載入 + PJAX 切換後都會呼叫）
     // ============================================================
     function init() {
-        initDataTables();
-        initCharts();
-        initSearch();
+        try { initDataTables(); } catch (e) { console.warn('[L4D2] DataTables init error:', e); }
+        try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error:', e); }
+        try { initSearch(); } catch (e) { console.warn('[L4D2] Search init error:', e); }
     }
 
     // ============================================================
     // DataTables
     // ============================================================
     function initDataTables() {
+        if (!$.fn.DataTable) return;
         initDT('#l4d2-leaderboard', { order: [[2, 'desc']] });
         initDT('#l4d2-weapons-table', { order: [[3, 'desc']] });
         initDT('#l4d2-sessions-table', { order: [[0, 'desc']], pageLength: 20 });
@@ -276,9 +277,10 @@
 
                         var html = '';
                         data.forEach(function (p) {
+                            var sep = l4d2Stats.player_page.indexOf('?') !== -1 ? '&' : '?';
                             var playerUrl =
                                 l4d2Stats.player_page +
-                                '?steam_id=' +
+                                sep + 'steam_id=' +
                                 encodeURIComponent(p.steam_id) +
                                 '&from=search';
 
