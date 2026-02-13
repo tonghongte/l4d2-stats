@@ -27,10 +27,10 @@
                 <tr>
                     <td><?php echo $i + 1; ?></td>
                     <td>
-                        <a href="<?php echo esc_url(add_query_arg('steam_id',
-                            urlencode($p->steam_id),
-                            \L4D2Stats\Plugin::instance() ? get_permalink(get_page_by_path('player-stats')) : '#'
-                        )); ?>" class="l4d2-player-link">
+                        <a href="<?php echo esc_url(add_query_arg([
+                            'steam_id' => urlencode($p->steam_id),
+                            'from'     => 'leaderboard',
+                        ], get_permalink(get_page_by_path('player-stats')))); ?>" class="l4d2-player-link">
                             <?php echo esc_html($p->name); ?>
                         </a>
                     </td>

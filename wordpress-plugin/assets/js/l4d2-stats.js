@@ -292,7 +292,8 @@
                             var playerUrl =
                                 l4d2Stats.player_page +
                                 '?steam_id=' +
-                                encodeURIComponent(p.steam_id);
+                                encodeURIComponent(p.steam_id) +
+                                '&from=search';
 
                             html +=
                                 '<div class="l4d2-search-result">' +

@@ -102,6 +102,10 @@ class Plugin {
         add_filter('query_vars', function ($vars) {
             $vars[] = 'steam_id';
             $vars[] = 'session_id';
+            $vars[] = 'from';
+            $vars[] = 'sid';
+            $vars[] = 'pid';
+            $vars[] = 'pname';
             return $vars;
         });
     }

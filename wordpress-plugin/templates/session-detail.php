@@ -4,12 +4,23 @@
     <!-- 麵包屑 -->
     <div class="l4d2-breadcrumb">
         <?php
-        $sessions_page = get_page_by_path('sessions');
-        if ($sessions_page): ?>
-            <a href="<?php echo get_permalink($sessions_page); ?>">場次列表</a>
-        <?php else: ?>
-            <span>場次列表</span>
-        <?php endif; ?>
+        $bc_from = isset($_GET['from']) ? sanitize_text_field($_GET['from']) : '';
+        $bc_pid = isset($_GET['pid']) ? sanitize_text_field($_GET['pid']) : '';
+        $bc_pname = isset($_GET['pname']) ? sanitize_text_field($_GET['pname']) : '';
+
+        if ($bc_from === 'player' && !empty($bc_pid)): ?>
+            <a href="<?php echo esc_url(add_query_arg('steam_id',
+                urlencode($bc_pid),
+                get_permalink(get_page_by_path('player-stats'))
+            )); ?>"><?php echo esc_html($bc_pname ?: $bc_pid); ?></a>
+        <?php else:
+            $sessions_page = get_page_by_path('sessions');
+            if ($sessions_page): ?>
+                <a href="<?php echo get_permalink($sessions_page); ?>">場次列表</a>
+            <?php else: ?>
+                <span>場次列表</span>
+            <?php endif;
+        endif; ?>
         <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
         <?php if (!empty($campaign_run_id)): ?>
             <a href="<?php echo esc_url(add_query_arg('session_id',
@@ -131,10 +142,11 @@
             <?php foreach ($players as $p): ?>
             <tr>
                 <td>
-                    <a href="<?php echo esc_url(add_query_arg('steam_id',
-                        urlencode($p->steam_id),
-                        get_permalink(get_page_by_path('player-stats'))
-                    )); ?>" class="l4d2-player-link">
+                    <a href="<?php echo esc_url(add_query_arg([
+                        'steam_id' => urlencode($p->steam_id),
+                        'from'     => 'session',
+                        'sid'      => (int)$session->id,
+                    ], get_permalink(get_page_by_path('player-stats')))); ?>" class="l4d2-player-link">
                         <?php echo esc_html($p->name); ?>
                     </a>
                 </td>

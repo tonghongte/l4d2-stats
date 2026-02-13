@@ -1,6 +1,44 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <div class="l4d2-stats-container">
 
+    <!-- 麵包屑 -->
+    <div class="l4d2-breadcrumb">
+        <?php
+        $from = isset($_GET['from']) ? sanitize_text_field($_GET['from']) : '';
+        $from_sid = isset($_GET['sid']) ? intval($_GET['sid']) : 0;
+        switch ($from) {
+            case 'search':
+                $search_page = get_page_by_path('player-search');
+                if ($search_page): ?>
+                    <a href="<?php echo get_permalink($search_page); ?>">玩家搜尋</a>
+                <?php else: ?>
+                    <span>玩家搜尋</span>
+                <?php endif;
+                break;
+            case 'session':
+                $sessions_page = get_page_by_path('sessions');
+                if ($sessions_page): ?>
+                    <a href="<?php echo get_permalink($sessions_page); ?>">場次列表</a>
+                <?php endif;
+                if ($from_sid > 0): ?>
+                    <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
+                    <a href="<?php echo esc_url(add_query_arg('session_id', $from_sid,
+                        get_permalink(get_page_by_path('session-detail')))); ?>">場次詳情</a>
+                <?php endif;
+                break;
+            default: // leaderboard or no from
+                $lb_page = get_page_by_path('leaderboard');
+                if ($lb_page): ?>
+                    <a href="<?php echo get_permalink($lb_page); ?>">排行榜</a>
+                <?php else: ?>
+                    <span>排行榜</span>
+                <?php endif;
+                break;
+        } ?>
+        <span class="l4d2-breadcrumb-sep">&rsaquo;</span>
+        <span><?php echo esc_html($player->name); ?></span>
+    </div>
+
     <!-- 玩家基本資料 -->
     <div class="l4d2-player-header">
         <div class="l4d2-player-info">
@@ -187,10 +225,12 @@
             <?php foreach ($sessions as $s): ?>
             <tr>
                 <td>
-                    <a href="<?php echo esc_url(add_query_arg('session_id',
-                        (int)$s->session_id,
-                        get_permalink(get_page_by_path('session-detail'))
-                    )); ?>" class="l4d2-session-link">
+                    <a href="<?php echo esc_url(add_query_arg([
+                        'session_id' => (int)$s->session_id,
+                        'from'       => 'player',
+                        'pid'        => urlencode($player->steam_id),
+                        'pname'      => urlencode($player->name),
+                    ], get_permalink(get_page_by_path('session-detail')))); ?>" class="l4d2-session-link">
                         <?php echo date('Y-m-d H:i', strtotime($s->start_time)); ?>
                     </a>
                 </td>
