@@ -315,8 +315,6 @@
    Chart Container
    ============================================================ */
 .l4d2-chart-container {
-    position: relative;
-    height: 340px;
     background: #1e1e1e;
     border: 1px solid #333;
     border-radius: 8px;
@@ -444,8 +442,6 @@
 }
 
 .l4d2-chart-half {
-    position: relative;
-    height: 290px;
     flex: 1;
     min-width: 0;
 }

@@ -116,6 +116,13 @@ jQuery(document).ready(function ($) {
         renderSessionDoughnutChart('#l4d2-session-weapon-chart');
     }
 
+    function fixChartContainer(el, height) {
+        var container = el.parentNode;
+        container.style.position = 'relative';
+        container.style.height = height + 'px';
+        container.style.overflow = 'hidden';
+    }
+
     function renderBarChart(selector, dataAttr, label, dataKey) {
         var el = document.querySelector(selector);
         if (!el) return;
@@ -134,6 +141,8 @@ jQuery(document).ready(function ($) {
         var values = chartData[dataKey] || chartData.kills || chartData.plays || [];
 
         if (labels.length === 0) return;
+
+        fixChartContainer(el, 340);
 
         new Chart(el.getContext('2d'), {
             type: 'bar',
@@ -191,6 +200,8 @@ jQuery(document).ready(function ($) {
 
         if (!chartData.labels || chartData.labels.length === 0) return;
 
+        fixChartContainer(el, 290);
+
         var bgColors = chartData.labels.map(function (_, i) {
             return playerColors[i % playerColors.length];
         });
@@ -244,6 +255,8 @@ jQuery(document).ready(function ($) {
         }
 
         if (!chartData.labels || chartData.labels.length === 0) return;
+
+        fixChartContainer(el, 340);
 
         var doughnutColors = [
             'rgba(255, 68, 68, 0.85)',
