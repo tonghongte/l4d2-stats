@@ -1,0 +1,15 @@
+// ============================================================
+// 將此區塊加入到你的 SourceMod databases.cfg 中
+// 路徑: addons/sourcemod/configs/databases.cfg
+// ============================================================
+// 在 "Databases" { ... } 區塊內加入:
+
+"l4d2stats"
+{
+    "driver"    "mysql"
+    "host"      "127.0.0.1"
+    "database"  "l4d2_stats"
+    "user"      "l4d2stats"
+    "pass"      "在此填入密碼"
+    "port"      "3306"
+}
