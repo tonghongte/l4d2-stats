@@ -55,9 +55,40 @@
     var chartInstances = [];
 
     // ============================================================
+    // Tab 狀態持久化 (Bootstrap tabs)
+    // ============================================================
+    function initTabPersistence() {
+        // 監聽 tab 切換，儲存到 localStorage
+        $(document).off('shown.bs.tab.l4d2').on('shown.bs.tab.l4d2',
+            '[data-toggle="tab"], [data-bs-toggle="tab"]',
+            function (e) {
+                var tabId = $(e.target).attr('href') || $(e.target).data('bsTarget');
+                if (tabId) {
+                    try { localStorage.setItem('l4d2_active_tab', tabId); } catch (ex) {}
+                }
+            }
+        );
+
+        // 優先使用 URL hash，其次使用 localStorage
+        var targetTab = window.location.hash || null;
+        if (!targetTab) {
+            try { targetTab = localStorage.getItem('l4d2_active_tab'); } catch (ex) {}
+        }
+
+        if (targetTab) {
+            var $tabLink = $('[data-toggle="tab"][href="' + targetTab + '"], ' +
+                            '[data-bs-toggle="tab"][href="' + targetTab + '"]');
+            if ($tabLink.length) {
+                $tabLink.tab('show');
+            }
+        }
+    }
+
+    // ============================================================
     // 主要初始化函式（首次載入 + PJAX 切換後都會呼叫）
     // ============================================================
     function init() {
+        try { initTabPersistence(); } catch (e) { console.warn('[L4D2] Tab persistence error:', e); }
         try { initDataTables(); } catch (e) { console.warn('[L4D2] DataTables init error:', e); }
         try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error:', e); }
         try { initSearch(); } catch (e) { console.warn('[L4D2] Search init error:', e); }
