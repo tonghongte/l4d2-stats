@@ -94,8 +94,26 @@
     // ============================================================
     // Chart.js 圖表
     // ============================================================
+    var chartRetryTimer;
+
     function initCharts() {
-        if (typeof Chart === 'undefined') return;
+        clearTimeout(chartRetryTimer);
+
+        // Chart.js 尚未載入 → 每 200ms 重試，最多 5 秒
+        if (typeof Chart === 'undefined') {
+            var retryCount = 0;
+            chartRetryTimer = setInterval(function () {
+                retryCount++;
+                if (typeof Chart !== 'undefined') {
+                    clearInterval(chartRetryTimer);
+                    initCharts();
+                } else if (retryCount >= 25) {
+                    clearInterval(chartRetryTimer);
+                    console.warn('[L4D2] Chart.js 載入逾時');
+                }
+            }, 200);
+            return;
+        }
 
         // 銷毀之前的 Chart 實例（PJAX 切換時）
         chartInstances.forEach(function (c) { c.destroy(); });
@@ -337,6 +355,16 @@
     // 啟動：首次載入 + PJAX 切換
     // ============================================================
     $(document).ready(init);
-    $(document).on('pjax:end', init);
+    $(document).on('pjax:end pjax:complete', function () {
+        setTimeout(init, 50);
+    });
+
+    // Fallback：Chart.js CDN 較慢載入時，window.load 再補初始化
+    $(window).on('load', function () {
+        if (typeof Chart !== 'undefined' && chartInstances.length === 0) {
+            var hasCanvas = document.querySelector('[id^="l4d2-"][id$="-chart"]');
+            if (hasCanvas) initCharts();
+        }
+    });
 
 })(jQuery);
