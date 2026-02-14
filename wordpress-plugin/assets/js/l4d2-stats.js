@@ -98,28 +98,10 @@
     // Chart.js 圖表
     // ============================================================
     function initCharts() {
-        console.log('[L4D2-DEBUG] initCharts() 被呼叫');
-        console.log('[L4D2-DEBUG] Chart 是否存在:', typeof Chart !== 'undefined');
-        console.log('[L4D2-DEBUG] chartsInitialized:', chartsInitialized);
+        if (typeof Chart === 'undefined') return;
 
-        // Chart.js 尚未載入 → 跳過，由 window.load 觸發
-        if (typeof Chart === 'undefined') {
-            console.warn('[L4D2-DEBUG] ✗ Chart.js 尚未載入');
-            return;
-        }
-
-        // 檢查頁面上是否有需要初始化的 canvas
-        var allCanvas = document.querySelectorAll('[id^="l4d2-"][id$="-chart"]');
-        console.log('[L4D2-DEBUG] 找到 canvas 數量:', allCanvas.length);
-        if (allCanvas.length > 0) {
-            allCanvas.forEach(function (c) {
-                console.log('[L4D2-DEBUG]   canvas:', c.id,
-                    '尺寸:', c.offsetWidth, 'x', c.offsetHeight,
-                    '可見:', c.offsetParent !== null,
-                    'data:', Object.keys(c.dataset));
-            });
-        }
-        if (allCanvas.length === 0) return;
+        var hasCanvas = document.querySelector('[id^="l4d2-"][id$="-chart"]');
+        if (!hasCanvas) return;
 
         // 銷毀之前的 Chart 實例（PJAX 切換時）
         chartInstances.forEach(function (c) { c.destroy(); });
@@ -137,7 +119,6 @@
         renderSessionDoughnutChart('#l4d2-session-weapon-chart');
 
         chartsInitialized = chartInstances.length > 0;
-        console.log('[L4D2-DEBUG] 圖表初始化完成, 建立了', chartInstances.length, '個圖表');
     }
 
     function renderBarChart(selector, dataAttr, label, dataKey) {
@@ -367,8 +348,6 @@
 
     // DOM ready
     $(document).ready(function () {
-        console.log('[L4D2-DEBUG] === document.ready 觸發 ===');
-        console.log('[L4D2-DEBUG] jQuery:', typeof jQuery, '| DataTable:', typeof $.fn.DataTable, '| Chart:', typeof Chart);
         try { initDataTables(); } catch (e) { console.warn('[L4D2] DataTables init error:', e); }
         try { initSearch(); } catch (e) { console.warn('[L4D2] Search init error:', e); }
         try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error:', e); }
@@ -376,11 +355,8 @@
 
     // window load：所有外部資源（含 Chart.js CDN）保證已載入
     $(window).on('load', function () {
-        console.log('[L4D2-DEBUG] === window.load 觸發 ===');
-        console.log('[L4D2-DEBUG] Chart:', typeof Chart, '| chartsInitialized:', chartsInitialized);
         if (!chartsInitialized) {
             var hasCanvas = document.querySelector('[id^="l4d2-"][id$="-chart"]');
-            console.log('[L4D2-DEBUG] 有 canvas:', !!hasCanvas);
             if (hasCanvas) {
                 try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error on load:', e); }
             }
@@ -391,7 +367,7 @@
     // 不依賴任何特定 PJAX 事件名稱，相容所有主題
     var reinitTimer;
     var observer = new MutationObserver(function (mutations) {
-        var dominated = false;
+        var needsReinit = false;
         for (var i = 0; i < mutations.length; i++) {
             if (mutations[i].addedNodes.length > 0) {
                 for (var j = 0; j < mutations[i].addedNodes.length; j++) {
@@ -400,15 +376,14 @@
                         node.classList && node.classList.contains('l4d2-wrap') ||
                         node.querySelector && node.querySelector('[id^="l4d2-"]')
                     )) {
-                        dominated = true;
+                        needsReinit = true;
                         break;
                     }
                 }
             }
-            if (dominated) break;
+            if (needsReinit) break;
         }
-        if (dominated) {
-            console.log('[L4D2-DEBUG] === MutationObserver 偵測到 L4D2 內容更新 ===');
+        if (needsReinit) {
             clearTimeout(reinitTimer);
             chartsInitialized = false;
             reinitTimer = setTimeout(init, 150);
