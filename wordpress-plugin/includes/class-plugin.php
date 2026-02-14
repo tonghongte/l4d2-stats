@@ -204,7 +204,7 @@ class Plugin {
     private static $campaign_thumbnails = [
         'Dead Center'    => 'https://static.wikia.nocookie.net/left4dead/images/6/6e/DeadCenter.jpg',
         'Dark Carnival'  => 'https://static.wikia.nocookie.net/left4dead/images/6/6c/Dark_Carnival02.png',
-        'Swamp Fever'    => 'https://static.wikia.nocookie.net/left4dead/images/5/5c/Swampfever.jpg',
+        'Swamp Fever'    => 'https://static.wikia.nocookie.net/left4dead/images/6/65/TheNewSwampFever.JPG',
         'Hard Rain'      => 'https://static.wikia.nocookie.net/left4dead/images/c/cd/HardRain.jpg',
         'The Parish'     => 'https://static.wikia.nocookie.net/left4dead/images/e/e8/TheNewParish.jpg',
         'The Passing'    => 'https://static.wikia.nocookie.net/left4dead/images/f/f3/The_Passing_Poster.jpg',
