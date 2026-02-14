@@ -7,7 +7,7 @@ Left 4 Dead 2 玩家戰績追蹤系統。透過 SourceMod 插件自動記錄遊�
 - **玩家排行榜** — 依擊殺數、K/D、命中率等多種排序
 - **玩家個人頁面** — 完整戰績卡片、武器圖表、地圖記錄、近期場次
 - **武器統計** — 全伺服器武器使用排行，含擊殺數/爆頭數/命中率
-- **地圖統計** — 各戰役地圖遊玩次數、通關率、獨立玩家數
+- **地圖統計** — 戰役列表概覽，點進查看各章節地圖的遊玩次數、通關率、獨立玩家數
 - **戰役場次記錄** — 連續遊玩的章節地圖自動歸組為一場戰役，顯示戰役名稱、章節數、難度、時長、通關狀態
 - **戰役詳細** — 點進戰役查看章節地圖列表、全戰役聚合數據（擊殺/傷害/武器分布圖表），支援「依序通關」徽章（從頭打到尾、不換難度）
 - **章節詳細** — 點進個別章節查看單張地圖的玩家表現、武器使用、道具使用、友軍傷害，搭配互動圖表
@@ -54,7 +54,7 @@ l4d2-stats/
     │   ├── class-leaderboard.php       # 排行榜
     │   ├── class-player.php            # 玩家個人頁 + 搜尋
     │   ├── class-weapons.php           # 武器統計
-    │   ├── class-maps.php              # 地圖統計
+    │   ├── class-maps.php              # 地圖統計（戰役列表/詳情雙模式）
     │   ├── class-sessions.php          # 戰役場次記錄
     │   ├── class-sessiondetail.php     # 場次詳細（戰役/章節雙模式）
     │   └── class-campaignrun.php       # 戰役場次分組引擎
@@ -267,7 +267,9 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 
 ### 3.4 建立頁面
 
-在 WordPress 後台建立以下頁面，並在內容中插入對應的 shortcode：
+在 WordPress 後台建立以下頁面，每個 shortcode 各自一個獨立頁面。插件會自動在每個頁面頂部渲染共用導航列，讓使用者在各功能間快速切換。
+
+> **注意：** 請勿將多個 shortcode 放在同一頁面的 tabs 中，應各自建立獨立頁面。
 
 #### 頁面 1：排行榜
 
@@ -310,6 +312,7 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
   ```
   [l4d2_maps]
   ```
+- 預設顯示戰役列表，點擊戰役名稱自動進入戰役地圖詳情（`?campaign=xxx`）
 
 #### 頁面 5：戰役場次
 
@@ -352,7 +355,7 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 | `[l4d2_player_stats]` | 玩家個人戰績頁面 | `steam_id`（指定玩家，或從 URL 自動取得） |
 | `[l4d2_player_search]` | 玩家搜尋輸入框 | 無 |
 | `[l4d2_weapons]` | 武器使用排行 | `type`（篩選類型：pistol/smg/shotgun/rifle/sniper/heavy/melee/throwable） |
-| `[l4d2_maps]` | 地圖統計 | `campaign`（篩選戰役名稱，例如 `Dead Center`） |
+| `[l4d2_maps]` | 地圖統計（戰役列表/詳情雙模式） | `?campaign=Dead Center` 進入戰役詳情 |
 | `[l4d2_recent_sessions]` | 戰役場次記錄（自動分組） | `limit`（原始場次上限，預設 300） |
 | `[l4d2_session_detail]` | 場次詳細（戰役/章節雙模式） | `session_id`（從 URL 自動取得），`?view=map` 切換為單地圖模式 |
 
