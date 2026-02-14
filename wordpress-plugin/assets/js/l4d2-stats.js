@@ -55,31 +55,33 @@
     var chartInstances = [];
 
     // ============================================================
-    // Tab 狀態持久化 (Bootstrap tabs)
+    // Tab 狀態持久化 (偵測 tabpanel，自動附加 hash)
     // ============================================================
     function initTabPersistence() {
-        // 監聽 tab 切換，儲存到 localStorage
-        $(document).off('shown.bs.tab.l4d2').on('shown.bs.tab.l4d2',
-            '[data-toggle="tab"], [data-bs-toggle="tab"]',
-            function (e) {
-                var tabId = $(e.target).attr('href') || $(e.target).data('bsTarget');
-                if (tabId) {
-                    try { localStorage.setItem('l4d2_active_tab', tabId); } catch (ex) {}
+        // 為所有在 tab panel 內的插件連結附加 tab panel hash
+        $('.l4d2-stats-container').each(function () {
+            var $panel = $(this).closest('[role="tabpanel"]');
+            if (!$panel.length || !$panel.attr('id')) return;
+
+            var tabHash = '#' + $panel.attr('id');
+            $(this).find('a[href]').each(function () {
+                var href = $(this).attr('href');
+                if (href && href.indexOf('#') === -1) {
+                    $(this).attr('href', href + tabHash);
                 }
-            }
-        );
+            });
+        });
 
-        // 優先使用 URL hash，其次使用 localStorage
-        var targetTab = window.location.hash || null;
-        if (!targetTab) {
-            try { targetTab = localStorage.getItem('l4d2_active_tab'); } catch (ex) {}
-        }
-
-        if (targetTab) {
-            var $tabLink = $('[data-toggle="tab"][href="' + targetTab + '"], ' +
-                            '[data-bs-toggle="tab"][href="' + targetTab + '"]');
-            if ($tabLink.length) {
-                $tabLink.tab('show');
+        // 根據 URL hash 啟用對應的 tab
+        var hash = window.location.hash;
+        if (hash) {
+            var panelId = hash.substring(1);
+            var panel = document.getElementById(panelId);
+            if (panel && panel.getAttribute('role') === 'tabpanel') {
+                var $tab = $('[aria-controls="' + panelId + '"]');
+                if ($tab.length) {
+                    $tab[0].click();
+                }
             }
         }
     }
