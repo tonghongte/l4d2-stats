@@ -1,5 +1,6 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <div class="l4d2-stats-container">
+    <?php echo \L4D2Stats\Plugin::render_nav('l4d2_player_search'); ?>
     <h2 class="l4d2-title">搜尋玩家</h2>
 
     <div class="l4d2-search-container">

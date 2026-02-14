@@ -158,6 +158,34 @@ class Plugin {
     }
 
     /**
+     * 渲染共用導航列
+     *
+     * @param string $current_shortcode 當前頁面的 shortcode 名稱
+     * @return string HTML
+     */
+    public static function render_nav($current_shortcode) {
+        $items = [
+            ['shortcode' => 'l4d2_leaderboard',     'label' => '排行榜'],
+            ['shortcode' => 'l4d2_maps',            'label' => '地圖統計'],
+            ['shortcode' => 'l4d2_recent_sessions', 'label' => '場次記錄'],
+            ['shortcode' => 'l4d2_weapons',         'label' => '武器統計'],
+            ['shortcode' => 'l4d2_player_search',   'label' => '搜尋玩家'],
+        ];
+
+        $html = '<nav class="l4d2-nav">';
+        foreach ($items as $item) {
+            $url = self::get_page_url_by_shortcode($item['shortcode']);
+            $active = ($item['shortcode'] === $current_shortcode) ? ' l4d2-nav-active' : '';
+            if ($url) {
+                $html .= '<a href="' . esc_url($url) . '" class="l4d2-nav-item' . $active . '">'
+                       . esc_html($item['label']) . '</a>';
+            }
+        }
+        $html .= '</nav>';
+        return $html;
+    }
+
+    /**
      * 格式化遊玩時間
      */
     public static function format_playtime($seconds) {

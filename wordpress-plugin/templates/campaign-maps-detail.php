@@ -1,5 +1,6 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <div class="l4d2-stats-container">
+    <?php echo \L4D2Stats\Plugin::render_nav('l4d2_maps'); ?>
 
     <!-- 麵包屑 -->
     <div class="l4d2-breadcrumb">

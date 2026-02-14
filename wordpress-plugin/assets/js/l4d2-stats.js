@@ -55,42 +55,9 @@
     var chartInstances = [];
 
     // ============================================================
-    // Tab 狀態持久化 (偵測 tabpanel，自動附加 hash)
-    // ============================================================
-    function initTabPersistence() {
-        // 為所有在 tab panel 內的插件連結附加 tab panel hash
-        $('.l4d2-stats-container').each(function () {
-            var $panel = $(this).closest('[role="tabpanel"]');
-            if (!$panel.length || !$panel.attr('id')) return;
-
-            var tabHash = '#' + $panel.attr('id');
-            $(this).find('a[href]').each(function () {
-                var href = $(this).attr('href');
-                if (href && href.indexOf('#') === -1) {
-                    $(this).attr('href', href + tabHash);
-                }
-            });
-        });
-
-        // 根據 URL hash 啟用對應的 tab
-        var hash = window.location.hash;
-        if (hash) {
-            var panelId = hash.substring(1);
-            var panel = document.getElementById(panelId);
-            if (panel && panel.getAttribute('role') === 'tabpanel') {
-                var $tab = $('[aria-controls="' + panelId + '"]');
-                if ($tab.length) {
-                    $tab[0].click();
-                }
-            }
-        }
-    }
-
-    // ============================================================
     // 主要初始化函式（首次載入 + PJAX 切換後都會呼叫）
     // ============================================================
     function init() {
-        try { initTabPersistence(); } catch (e) { console.warn('[L4D2] Tab persistence error:', e); }
         try { initDataTables(); } catch (e) { console.warn('[L4D2] DataTables init error:', e); }
         try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error:', e); }
         try { initSearch(); } catch (e) { console.warn('[L4D2] Search init error:', e); }

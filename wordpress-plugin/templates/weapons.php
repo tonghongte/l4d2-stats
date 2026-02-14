@@ -1,5 +1,6 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <div class="l4d2-stats-container">
+    <?php echo \L4D2Stats\Plugin::render_nav('l4d2_weapons'); ?>
     <h2 class="l4d2-title">武器統計</h2>
 
     <?php if (empty($weapons)): ?>

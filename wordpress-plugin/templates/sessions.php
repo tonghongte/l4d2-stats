@@ -1,5 +1,6 @@
 <?php if (!defined('ABSPATH')) exit; ?>
 <div class="l4d2-stats-container">
+    <?php echo \L4D2Stats\Plugin::render_nav('l4d2_recent_sessions'); ?>
     <h2 class="l4d2-title">戰役場次記錄</h2>
 
     <?php if (empty($campaign_runs)): ?>
