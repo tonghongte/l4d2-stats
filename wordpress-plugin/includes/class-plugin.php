@@ -202,20 +202,20 @@ class Plugin {
 
     /** 官方戰役海報圖 URL 映射 (L4D Wiki) */
     private static $campaign_thumbnails = [
-        'Dead Center'    => 'https://static.wikia.nocookie.net/left4dead/images/6/6e/DeadCenter.jpg/revision/latest',
-        'Dark Carnival'  => 'https://static.wikia.nocookie.net/left4dead/images/6/6c/Dark_Carnival02.png/revision/latest',
-        'Swamp Fever'    => 'https://static.wikia.nocookie.net/left4dead/images/5/5c/Swampfever.jpg/revision/latest',
-        'Hard Rain'      => 'https://static.wikia.nocookie.net/left4dead/images/c/cd/HardRain.jpg/revision/latest',
-        'The Parish'     => 'https://static.wikia.nocookie.net/left4dead/images/e/e8/TheNewParish.jpg/revision/latest',
-        'The Passing'    => 'https://static.wikia.nocookie.net/left4dead/images/f/f3/The_Passing_Poster.jpg/revision/latest',
-        'The Sacrifice'  => 'https://static.wikia.nocookie.net/left4dead/images/f/ff/It%27s_Your_Funeral.jpg/revision/latest',
-        'No Mercy'       => 'https://static.wikia.nocookie.net/left4dead/images/d/d2/No_Mercy.jpg/revision/latest',
-        'Crash Course'   => 'https://static.wikia.nocookie.net/left4dead/images/8/89/Crash_Course.jpg/revision/latest',
-        'Death Toll'     => 'https://static.wikia.nocookie.net/left4dead/images/9/93/Death_Toll.jpg/revision/latest',
-        'Dead Air'       => 'https://static.wikia.nocookie.net/left4dead/images/8/8c/Dead_Air.jpg/revision/latest',
-        'Blood Harvest'  => 'https://static.wikia.nocookie.net/left4dead/images/0/03/Blood_Harvest.jpg/revision/latest',
-        'Cold Stream'    => 'https://static.wikia.nocookie.net/left4dead/images/2/2c/COLDSTEAMPOSTER.png/revision/latest',
-        'The Last Stand' => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/The_Last_Stand.jpg/revision/latest',
+        'Dead Center'    => 'https://static.wikia.nocookie.net/left4dead/images/6/6e/DeadCenter.jpg',
+        'Dark Carnival'  => 'https://static.wikia.nocookie.net/left4dead/images/6/6c/Dark_Carnival02.png',
+        'Swamp Fever'    => 'https://static.wikia.nocookie.net/left4dead/images/5/5c/Swampfever.jpg',
+        'Hard Rain'      => 'https://static.wikia.nocookie.net/left4dead/images/c/cd/HardRain.jpg',
+        'The Parish'     => 'https://static.wikia.nocookie.net/left4dead/images/e/e8/TheNewParish.jpg',
+        'The Passing'    => 'https://static.wikia.nocookie.net/left4dead/images/f/f3/The_Passing_Poster.jpg',
+        'The Sacrifice'  => 'https://static.wikia.nocookie.net/left4dead/images/f/ff/It%27s_Your_Funeral.jpg',
+        'No Mercy'       => 'https://static.wikia.nocookie.net/left4dead/images/d/d2/No_Mercy.jpg',
+        'Crash Course'   => 'https://static.wikia.nocookie.net/left4dead/images/8/89/Crash_Course.jpg',
+        'Death Toll'     => 'https://static.wikia.nocookie.net/left4dead/images/9/93/Death_Toll.jpg',
+        'Dead Air'       => 'https://static.wikia.nocookie.net/left4dead/images/8/8c/Dead_Air.jpg',
+        'Blood Harvest'  => 'https://static.wikia.nocookie.net/left4dead/images/0/03/Blood_Harvest.jpg',
+        'Cold Stream'    => 'https://static.wikia.nocookie.net/left4dead/images/2/2c/COLDSTEAMPOSTER.png',
+        'The Last Stand' => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/The_Last_Stand.jpg',
     ];
 
     /**
