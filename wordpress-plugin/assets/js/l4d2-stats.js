@@ -362,7 +362,7 @@
     }
 
     // ============================================================
-    // 啟動：首次載入 + PJAX 切換
+    // 啟動：首次載入 + 動態內容偵測
     // ============================================================
 
     // DOM ready
@@ -387,11 +387,33 @@
         }
     });
 
-    // PJAX 切換：重新初始化所有元件
-    $(document).on('pjax:end pjax:complete', function (e) {
-        console.log('[L4D2-DEBUG] === PJAX 事件觸發:', e.type, '===');
-        chartsInitialized = false;
-        setTimeout(init, 100);
+    // MutationObserver：偵測 PJAX/SPA 動態替換內容後自動重新初始化
+    // 不依賴任何特定 PJAX 事件名稱，相容所有主題
+    var reinitTimer;
+    var observer = new MutationObserver(function (mutations) {
+        var dominated = false;
+        for (var i = 0; i < mutations.length; i++) {
+            if (mutations[i].addedNodes.length > 0) {
+                for (var j = 0; j < mutations[i].addedNodes.length; j++) {
+                    var node = mutations[i].addedNodes[j];
+                    if (node.nodeType === 1 && (
+                        node.classList && node.classList.contains('l4d2-wrap') ||
+                        node.querySelector && node.querySelector('[id^="l4d2-"]')
+                    )) {
+                        dominated = true;
+                        break;
+                    }
+                }
+            }
+            if (dominated) break;
+        }
+        if (dominated) {
+            console.log('[L4D2-DEBUG] === MutationObserver 偵測到 L4D2 內容更新 ===');
+            clearTimeout(reinitTimer);
+            chartsInitialized = false;
+            reinitTimer = setTimeout(init, 150);
+        }
     });
+    observer.observe(document.body, { childList: true, subtree: true });
 
 })(jQuery);
