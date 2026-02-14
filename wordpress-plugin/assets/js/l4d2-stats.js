@@ -54,6 +54,9 @@
     // 追蹤已建立的 Chart 實例，PJAX 切換時銷毀
     var chartInstances = [];
 
+    // 追蹤圖表是否已初始化
+    var chartsInitialized = false;
+
     // ============================================================
     // 主要初始化函式（首次載入 + PJAX 切換後都會呼叫）
     // ============================================================
@@ -94,30 +97,21 @@
     // ============================================================
     // Chart.js 圖表
     // ============================================================
-    var chartRetryTimer;
-
     function initCharts() {
-        clearTimeout(chartRetryTimer);
-
-        // Chart.js 尚未載入 → 每 200ms 重試，最多 5 秒
+        // Chart.js 尚未載入 → 跳過，由 window.load 觸發
         if (typeof Chart === 'undefined') {
-            var retryCount = 0;
-            chartRetryTimer = setInterval(function () {
-                retryCount++;
-                if (typeof Chart !== 'undefined') {
-                    clearInterval(chartRetryTimer);
-                    initCharts();
-                } else if (retryCount >= 25) {
-                    clearInterval(chartRetryTimer);
-                    console.warn('[L4D2] Chart.js 載入逾時');
-                }
-            }, 200);
+            console.warn('[L4D2] Chart.js 尚未載入，等待 window load');
             return;
         }
+
+        // 檢查頁面上是否有需要初始化的 canvas
+        var hasCanvas = document.querySelector('[id^="l4d2-"][id$="-chart"]');
+        if (!hasCanvas) return;
 
         // 銷毀之前的 Chart 實例（PJAX 切換時）
         chartInstances.forEach(function (c) { c.destroy(); });
         chartInstances = [];
+        chartsInitialized = false;
 
         Chart.defaults.color = '#ccc';
         Chart.defaults.borderColor = '#333';
@@ -128,6 +122,8 @@
         renderSessionBarChart('#l4d2-session-kills-chart', '擊殺數');
         renderSessionBarChart('#l4d2-session-damage-chart', '傷害量');
         renderSessionDoughnutChart('#l4d2-session-weapon-chart');
+
+        chartsInitialized = chartInstances.length > 0;
     }
 
     function renderBarChart(selector, dataAttr, label, dataKey) {
@@ -354,17 +350,29 @@
     // ============================================================
     // 啟動：首次載入 + PJAX 切換
     // ============================================================
-    $(document).ready(init);
-    $(document).on('pjax:end pjax:complete', function () {
-        setTimeout(init, 50);
+
+    // DOM ready：初始化 DataTables 和搜尋（不含圖表）
+    $(document).ready(function () {
+        try { initDataTables(); } catch (e) { console.warn('[L4D2] DataTables init error:', e); }
+        try { initSearch(); } catch (e) { console.warn('[L4D2] Search init error:', e); }
+        // 嘗試初始化圖表（Chart.js 可能已載入）
+        try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error:', e); }
     });
 
-    // Fallback：Chart.js CDN 較慢載入時，window.load 再補初始化
+    // window load：所有外部資源（含 Chart.js CDN）保證已載入
     $(window).on('load', function () {
-        if (typeof Chart !== 'undefined' && chartInstances.length === 0) {
+        if (!chartsInitialized) {
             var hasCanvas = document.querySelector('[id^="l4d2-"][id$="-chart"]');
-            if (hasCanvas) initCharts();
+            if (hasCanvas) {
+                try { initCharts(); } catch (e) { console.warn('[L4D2] Charts init error on load:', e); }
+            }
         }
+    });
+
+    // PJAX 切換：重新初始化所有元件
+    $(document).on('pjax:end pjax:complete', function () {
+        chartsInitialized = false;
+        setTimeout(init, 100);
     });
 
 })(jQuery);

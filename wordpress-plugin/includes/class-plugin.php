@@ -63,6 +63,15 @@ class Plugin {
                 'session_page' => $this->get_session_page_url(),
             ]);
         });
+
+        // 防止快取/優化外掛對關鍵腳本加上 defer 或 async，避免載入順序錯亂
+        add_filter('script_loader_tag', function ($tag, $handle) {
+            $no_defer = ['chartjs', 'l4d2-stats-js', 'datatables-js'];
+            if (in_array($handle, $no_defer, true)) {
+                $tag = str_replace([' defer', ' async'], '', $tag);
+            }
+            return $tag;
+        }, 999, 2);
     }
 
     private function register_ajax() {
