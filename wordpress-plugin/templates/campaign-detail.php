@@ -25,6 +25,7 @@
 
     <!-- 戰役標題卡 -->
     <div class="l4d2-session-header">
+        <?php echo \L4D2Stats\Plugin::render_campaign_thumbnail($run['campaign_name'], 'large'); ?>
         <div class="l4d2-session-info">
             <h3 class="l4d2-session-map-name">
                 <?php echo esc_html($run['campaign_name']); ?>
@@ -176,6 +177,7 @@
                         'from'     => 'session',
                         'sid'      => (int)$run['first_session_id'],
                     ], get_permalink(get_page_by_path('player-stats')))); ?>" class="l4d2-player-link">
+                        <?php echo \L4D2Stats\Plugin::render_avatar($avatars[$p->steam_id_64] ?? '', 'small'); ?>
                         <?php echo esc_html($p->name); ?>
                     </a>
                 </td>

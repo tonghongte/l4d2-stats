@@ -42,6 +42,10 @@ class Player {
             return '<div class="l4d2-notice">找不到此玩家。</div>';
         }
 
+        // 抓取頭像
+        $avatars = Plugin::fetch_avatars([$player]);
+        $avatar_url = $avatars[$player->steam_id_64] ?? Plugin::DEFAULT_AVATAR;
+
         // 計算衍生數據
         $total_kills = $player->kills_infected + $player->kills_si;
         $kd_ratio = $player->deaths > 0
@@ -148,7 +152,7 @@ class Player {
 
         $db = Database::instance();
         $results = $db->query(
-            "SELECT name, steam_id, steam_id_64, last_seen, total_playtime
+            "SELECT name, steam_id, steam_id_64, last_seen, total_playtime, avatar_url
              FROM l4d2_players
              WHERE name LIKE %s OR steam_id LIKE %s
              ORDER BY last_seen DESC

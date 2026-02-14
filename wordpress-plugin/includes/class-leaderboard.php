@@ -19,6 +19,7 @@ class Leaderboard {
             SELECT
                 p.id, p.name, p.steam_id, p.steam_id_64,
                 p.total_playtime, p.last_seen,
+                p.avatar_url, p.avatar_updated_at,
                 ps.kills_infected + ps.kills_si AS total_kills,
                 ps.kills_si,
                 ps.kills_tank,
@@ -45,6 +46,9 @@ class Leaderboard {
         ";
 
         $players = $db->query($sql, [$limit], "leaderboard_{$sort}_{$limit}", 60);
+
+        // 批次抓取頭像
+        $avatars = Plugin::fetch_avatars($players);
 
         ob_start();
         include L4D2_STATS_DIR . 'templates/leaderboard.php';

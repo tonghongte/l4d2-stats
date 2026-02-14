@@ -37,6 +37,7 @@
                             urlencode($c->campaign_name),
                             get_permalink()
                         )); ?>" class="l4d2-campaign-link">
+                            <?php echo \L4D2Stats\Plugin::render_campaign_thumbnail($c->campaign_name, 'small'); ?>
                             <?php echo esc_html($c->campaign_name); ?>
                         </a>
                     </td>

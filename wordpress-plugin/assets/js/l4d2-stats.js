@@ -285,6 +285,7 @@
                             return;
                         }
 
+                        var defaultAvatar = 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg';
                         var html = '';
                         data.forEach(function (p) {
                             var sep = l4d2Stats.player_page.indexOf('?') !== -1 ? '&' : '?';
@@ -293,9 +294,11 @@
                                 sep + 'steam_id=' +
                                 encodeURIComponent(p.steam_id) +
                                 '&from=search';
+                            var avatarUrl = p.avatar_url || defaultAvatar;
 
                             html +=
                                 '<div class="l4d2-search-result">' +
+                                '<img src="' + escapeHtml(avatarUrl) + '" alt="avatar" class="l4d2-avatar l4d2-avatar-medium" loading="lazy">' +
                                 '<div>' +
                                 '<a href="' + playerUrl + '">' +
                                 escapeHtml(p.name) +

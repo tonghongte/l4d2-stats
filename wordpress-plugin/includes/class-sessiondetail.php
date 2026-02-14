@@ -61,6 +61,7 @@ class SessionDetail {
         $players = $db->query(
             "SELECT
                 p.name, p.steam_id, p.steam_id_64,
+                p.avatar_url, p.avatar_updated_at,
                 SUM(COALESCE(sps.kills_infected, 0)) AS kills_infected,
                 SUM(COALESCE(sps.kills_si, 0)) AS kills_si,
                 SUM(COALESCE(sps.kills_witch, 0)) AS kills_witch,
@@ -174,6 +175,9 @@ class SessionDetail {
             'impossible' => '專家',
         ];
 
+        // 批次抓取頭像
+        $avatars = Plugin::fetch_avatars($players);
+
         ob_start();
         include L4D2_STATS_DIR . 'templates/campaign-detail.php';
         return ob_get_clean();
@@ -211,6 +215,7 @@ class SessionDetail {
         $players = $db->query(
             "SELECT
                 p.name, p.steam_id, p.steam_id_64,
+                p.avatar_url, p.avatar_updated_at,
                 sp.join_time, sp.leave_time, sp.duration AS player_duration,
                 COALESCE(sps.kills_infected, 0) AS kills_infected,
                 COALESCE(sps.kills_si, 0) AS kills_si,
@@ -322,6 +327,9 @@ class SessionDetail {
             'hard'       => '進階',
             'impossible' => '專家',
         ];
+
+        // 批次抓取頭像
+        $avatars = Plugin::fetch_avatars($players);
 
         ob_start();
         include L4D2_STATS_DIR . 'templates/session-detail.php';

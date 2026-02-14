@@ -35,6 +35,7 @@
 
     <!-- 場次基本資料卡 -->
     <div class="l4d2-session-header">
+        <?php echo \L4D2Stats\Plugin::render_campaign_thumbnail($session->campaign_name, 'large'); ?>
         <div class="l4d2-session-info">
             <h3 class="l4d2-session-map-name">
                 <?php echo esc_html($session->map_name ?: '未知地圖'); ?>
@@ -143,6 +144,7 @@
                         'from'     => 'session',
                         'sid'      => (int)$session->id,
                     ], get_permalink(get_page_by_path('player-stats')))); ?>" class="l4d2-player-link">
+                        <?php echo \L4D2Stats\Plugin::render_avatar($avatars[$p->steam_id_64] ?? '', 'small'); ?>
                         <?php echo esc_html($p->name); ?>
                     </a>
                 </td>

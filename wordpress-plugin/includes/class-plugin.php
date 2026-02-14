@@ -20,6 +20,8 @@ class Plugin {
         $this->register_ajax();
         $this->register_rest_api();
         $this->register_rewrite_rules();
+        $this->register_settings();
+        $this->maybe_migrate_db();
     }
 
     private function register_shortcodes() {
@@ -193,6 +195,200 @@ class Plugin {
         $html .= '</nav>';
         return $html;
     }
+
+    // ============================================================
+    // 戰役縮圖
+    // ============================================================
+
+    /** 官方戰役海報圖 URL 映射 (L4D Wiki) */
+    private static $campaign_thumbnails = [
+        'Dead Center'    => 'https://static.wikia.nocookie.net/left4dead/images/6/6e/DeadCenter.jpg/revision/latest',
+        'Dark Carnival'  => 'https://static.wikia.nocookie.net/left4dead/images/6/6c/Dark_Carnival02.png/revision/latest',
+        'Swamp Fever'    => 'https://static.wikia.nocookie.net/left4dead/images/5/5c/Swampfever.jpg/revision/latest',
+        'Hard Rain'      => 'https://static.wikia.nocookie.net/left4dead/images/c/cd/HardRain.jpg/revision/latest',
+        'The Parish'     => 'https://static.wikia.nocookie.net/left4dead/images/e/e8/TheNewParish.jpg/revision/latest',
+        'The Passing'    => 'https://static.wikia.nocookie.net/left4dead/images/f/f3/The_Passing_Poster.jpg/revision/latest',
+        'The Sacrifice'  => 'https://static.wikia.nocookie.net/left4dead/images/f/ff/It%27s_Your_Funeral.jpg/revision/latest',
+        'No Mercy'       => 'https://static.wikia.nocookie.net/left4dead/images/d/d2/No_Mercy.jpg/revision/latest',
+        'Crash Course'   => 'https://static.wikia.nocookie.net/left4dead/images/8/89/Crash_Course.jpg/revision/latest',
+        'Death Toll'     => 'https://static.wikia.nocookie.net/left4dead/images/9/93/Death_Toll.jpg/revision/latest',
+        'Dead Air'       => 'https://static.wikia.nocookie.net/left4dead/images/8/8c/Dead_Air.jpg/revision/latest',
+        'Blood Harvest'  => 'https://static.wikia.nocookie.net/left4dead/images/0/03/Blood_Harvest.jpg/revision/latest',
+        'Cold Stream'    => 'https://static.wikia.nocookie.net/left4dead/images/2/2c/COLDSTEAMPOSTER.png/revision/latest',
+        'The Last Stand' => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/The_Last_Stand.jpg/revision/latest',
+    ];
+
+    /**
+     * 取得戰役縮圖 URL
+     */
+    public static function get_campaign_thumbnail($campaign_name) {
+        return self::$campaign_thumbnails[$campaign_name] ?? '';
+    }
+
+    /**
+     * 渲染戰役縮圖 HTML
+     *
+     * @param string $campaign_name 戰役名稱
+     * @param string $size 'small' | 'medium' | 'large'
+     */
+    public static function render_campaign_thumbnail($campaign_name, $size = 'small') {
+        $url = self::get_campaign_thumbnail($campaign_name);
+        if ($url) {
+            return '<img src="' . esc_url($url) . '" alt="' . esc_attr($campaign_name) . '" class="l4d2-campaign-thumb l4d2-thumb-' . esc_attr($size) . '" loading="lazy">';
+        }
+        return '<span class="l4d2-campaign-thumb l4d2-thumb-' . esc_attr($size) . ' l4d2-thumb-placeholder" title="' . esc_attr($campaign_name) . '">&#x1f5fa;</span>';
+    }
+
+    // ============================================================
+    // Steam 頭像
+    // ============================================================
+
+    const DEFAULT_AVATAR = 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg';
+
+    public static function get_steam_api_key() {
+        return get_option('l4d2_stats_steam_api_key', '');
+    }
+
+    /**
+     * 批次抓取並快取 Steam 頭像
+     *
+     * @param array $players 含 steam_id_64, avatar_url, avatar_updated_at 的物件陣列
+     * @return array steam_id_64 => avatar_url 映射
+     */
+    public static function fetch_avatars($players) {
+        $api_key = self::get_steam_api_key();
+        $avatars = [];
+        $need_fetch = [];
+
+        foreach ($players as $p) {
+            $sid64 = $p->steam_id_64 ?? '';
+            if (empty($sid64)) {
+                continue;
+            }
+            if (!empty($p->avatar_url) && !empty($p->avatar_updated_at)
+                && strtotime($p->avatar_updated_at) > time() - 86400) {
+                $avatars[$sid64] = $p->avatar_url;
+            } else {
+                $need_fetch[] = $sid64;
+                $avatars[$sid64] = $p->avatar_url ?: self::DEFAULT_AVATAR;
+            }
+        }
+
+        if (!empty($need_fetch) && !empty($api_key)) {
+            foreach (array_chunk($need_fetch, 100) as $chunk) {
+                $ids_param = implode(',', $chunk);
+                $api_url = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={$api_key}&steamids={$ids_param}";
+                $response = wp_remote_get($api_url, ['timeout' => 5]);
+                if (is_wp_error($response)) continue;
+
+                $body = json_decode(wp_remote_retrieve_body($response), true);
+                if (empty($body['response']['players'])) continue;
+
+                $db = Database::instance();
+                foreach ($body['response']['players'] as $sp) {
+                    $sid = $sp['steamid'];
+                    $avatar = $sp['avatarmedium'] ?? self::DEFAULT_AVATAR;
+                    $avatars[$sid] = $avatar;
+                    $db->get_db()->query($db->get_db()->prepare(
+                        "UPDATE l4d2_players SET avatar_url = %s, avatar_updated_at = NOW() WHERE steam_id_64 = %s",
+                        $avatar, $sid
+                    ));
+                }
+            }
+        }
+
+        return $avatars;
+    }
+
+    /**
+     * 渲染玩家頭像 HTML
+     *
+     * @param string $avatar_url 頭像 URL
+     * @param string $size 'small' (28px) | 'medium' (40px) | 'large' (96px)
+     */
+    public static function render_avatar($avatar_url, $size = 'small') {
+        $url = $avatar_url ?: self::DEFAULT_AVATAR;
+        return '<img src="' . esc_url($url) . '" alt="avatar" class="l4d2-avatar l4d2-avatar-' . esc_attr($size) . '" loading="lazy">';
+    }
+
+    // ============================================================
+    // WordPress 後台設定頁面
+    // ============================================================
+
+    private function register_settings() {
+        add_action('admin_menu', function () {
+            add_options_page(
+                'L4D2 Stats 設定',
+                'L4D2 Stats',
+                'manage_options',
+                'l4d2-stats-settings',
+                [self::class, 'render_settings_page']
+            );
+        });
+
+        add_action('admin_init', function () {
+            register_setting('l4d2_stats_settings', 'l4d2_stats_steam_api_key', [
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ]);
+            add_settings_section(
+                'l4d2_stats_steam_section',
+                'Steam API',
+                function () {
+                    echo '<p>設定 Steam Web API Key 以啟用玩家頭像功能。<a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener">取得 API Key</a></p>';
+                },
+                'l4d2-stats-settings'
+            );
+            add_settings_field(
+                'l4d2_stats_steam_api_key',
+                'Steam Web API Key',
+                function () {
+                    $key = get_option('l4d2_stats_steam_api_key', '');
+                    echo '<input type="text" name="l4d2_stats_steam_api_key" value="' . esc_attr($key) . '" class="regular-text" placeholder="輸入你的 Steam Web API Key">';
+                },
+                'l4d2-stats-settings',
+                'l4d2_stats_steam_section'
+            );
+        });
+    }
+
+    public static function render_settings_page() {
+        if (!current_user_can('manage_options')) return;
+        ?>
+        <div class="wrap">
+            <h1>L4D2 Stats 設定</h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields('l4d2_stats_settings');
+                do_settings_sections('l4d2-stats-settings');
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    // ============================================================
+    // DB Migration
+    // ============================================================
+
+    private function maybe_migrate_db() {
+        $db_version = get_option('l4d2_stats_db_version', 0);
+        if ($db_version >= 1) return;
+
+        $db = Database::instance();
+        $wpdb = $db->get_db();
+        $column = $wpdb->get_results("SHOW COLUMNS FROM l4d2_players LIKE 'avatar_url'");
+        if (empty($column)) {
+            $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_url VARCHAR(255) DEFAULT NULL");
+            $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_updated_at DATETIME DEFAULT NULL");
+        }
+        update_option('l4d2_stats_db_version', 1);
+    }
+
+    // ============================================================
+    // 工具函式
+    // ============================================================
 
     /**
      * 格式化遊玩時間

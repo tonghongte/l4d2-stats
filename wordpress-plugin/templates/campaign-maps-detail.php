@@ -17,6 +17,7 @@
 
     <!-- 戰役標題卡 -->
     <div class="l4d2-session-header">
+        <?php echo \L4D2Stats\Plugin::render_campaign_thumbnail($campaign_stats->campaign_name, 'large'); ?>
         <div class="l4d2-session-info">
             <h3 class="l4d2-session-map-name">
                 <?php echo esc_html($campaign_stats->campaign_name); ?>
