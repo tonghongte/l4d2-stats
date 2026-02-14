@@ -22,12 +22,12 @@
             <tbody>
                 <?php foreach ($campaign_runs as $run): ?>
                 <tr>
-                    <td data-order="<?php echo strtotime($run['start_time']); ?>">
+                    <td data-order="<?php echo \L4D2Stats\Plugin::mysql_utc($run['start_time']); ?>">
                         <a href="<?php echo esc_url(add_query_arg('session_id',
                             (int)$run['first_session_id'],
                             get_permalink(get_page_by_path('session-detail'))
                         )); ?>" class="l4d2-session-link">
-                            <?php echo date('Y-m-d H:i', strtotime($run['start_time'])); ?>
+                            <?php echo date('Y-m-d H:i', \L4D2Stats\Plugin::mysql_utc($run['start_time'])); ?>
                         </a>
                     </td>
                     <td><?php echo esc_html($run['campaign_name'] ?: '自訂地圖'); ?></td>

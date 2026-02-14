@@ -240,6 +240,20 @@ class Plugin {
     }
 
     // ============================================================
+    // 時間處理 (MySQL UTC → PHP timestamp)
+    // ============================================================
+
+    /**
+     * 將 MySQL datetime (UTC) 轉為 Unix timestamp
+     * SourceMod 使用 NOW() 存入的是 MySQL server 時間 (UTC)，
+     * 但 PHP strtotime() 會以 WP 本地時區解讀，導致偏差。
+     */
+    public static function mysql_utc($datetime) {
+        if (empty($datetime)) return 0;
+        return strtotime($datetime . ' UTC');
+    }
+
+    // ============================================================
     // Steam 頭像
     // ============================================================
 

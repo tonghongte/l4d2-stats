@@ -56,9 +56,9 @@
                         </div>
                     </td>
                     <td><?php echo (int)$c->unique_players; ?></td>
-                    <td data-order="<?php echo $c->last_played ? strtotime($c->last_played) : 0; ?>">
+                    <td data-order="<?php echo $c->last_played ? \L4D2Stats\Plugin::mysql_utc($c->last_played) : 0; ?>">
                         <?php if ($c->last_played): ?>
-                            <?php echo human_time_diff(strtotime($c->last_played)); ?> 前
+                            <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($c->last_played)); ?> 前
                         <?php else: ?>
                             -
                         <?php endif; ?>

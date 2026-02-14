@@ -53,8 +53,8 @@
                 <?php endif; ?>
             </div>
             <div class="l4d2-player-meta">
-                <span>首次上線: <?php echo date('Y-m-d', strtotime($player->first_seen)); ?></span>
-                <span>最後上線: <?php echo human_time_diff(strtotime($player->last_seen)); ?> 前</span>
+                <span>首次上線: <?php echo date('Y-m-d', \L4D2Stats\Plugin::mysql_utc($player->first_seen)); ?></span>
+                <span>最後上線: <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($player->last_seen)); ?> 前</span>
                 <span>總遊玩時間: <?php echo \L4D2Stats\Plugin::format_playtime($player->total_playtime); ?></span>
             </div>
         </div>
@@ -232,7 +232,7 @@
                         'pid'        => urlencode($player->steam_id),
                         'pname'      => urlencode($player->name),
                     ], get_permalink(get_page_by_path('session-detail')))); ?>" class="l4d2-session-link">
-                        <?php echo date('Y-m-d H:i', strtotime($s->start_time)); ?>
+                        <?php echo date('Y-m-d H:i', \L4D2Stats\Plugin::mysql_utc($s->start_time)); ?>
                     </a>
                 </td>
                 <td><?php echo esc_html($s->map_name); ?></td>

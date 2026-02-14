@@ -40,8 +40,8 @@
                 <span>章節: <?php echo (int)$run['map_count']; ?> 章</span>
             </div>
             <div class="l4d2-player-meta">
-                <span>開始: <?php echo date('Y-m-d H:i:s', strtotime($run['start_time'])); ?></span>
-                <span>結束: <?php echo date('Y-m-d H:i:s', strtotime($run['end_time'])); ?></span>
+                <span>開始: <?php echo date('Y-m-d H:i:s', \L4D2Stats\Plugin::mysql_utc($run['start_time'])); ?></span>
+                <span>結束: <?php echo date('Y-m-d H:i:s', \L4D2Stats\Plugin::mysql_utc($run['end_time'])); ?></span>
                 <span>總時長: <?php echo \L4D2Stats\Plugin::format_playtime($run['total_duration']); ?></span>
             </div>
             <div class="l4d2-player-meta" style="margin-top: 8px;">

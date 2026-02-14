@@ -39,10 +39,10 @@
             </div>
             <div class="l4d2-player-meta">
                 <?php if ($campaign_stats->first_played): ?>
-                    <span>首次遊玩: <?php echo date('Y-m-d', strtotime($campaign_stats->first_played)); ?></span>
+                    <span>首次遊玩: <?php echo date('Y-m-d', \L4D2Stats\Plugin::mysql_utc($campaign_stats->first_played)); ?></span>
                 <?php endif; ?>
                 <?php if ($campaign_stats->last_played): ?>
-                    <span>最後遊玩: <?php echo human_time_diff(strtotime($campaign_stats->last_played)); ?> 前</span>
+                    <span>最後遊玩: <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($campaign_stats->last_played)); ?> 前</span>
                 <?php endif; ?>
             </div>
         </div>
@@ -95,9 +95,9 @@
                     </div>
                 </td>
                 <td><?php echo (int)$m->unique_players; ?></td>
-                <td data-order="<?php echo $m->last_played ? strtotime($m->last_played) : 0; ?>">
+                <td data-order="<?php echo $m->last_played ? \L4D2Stats\Plugin::mysql_utc($m->last_played) : 0; ?>">
                     <?php if ($m->last_played): ?>
-                        <?php echo human_time_diff(strtotime($m->last_played)); ?> 前
+                        <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($m->last_played)); ?> 前
                     <?php else: ?>
                         -
                     <?php endif; ?>

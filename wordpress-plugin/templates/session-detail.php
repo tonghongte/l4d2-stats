@@ -53,9 +53,9 @@
                 <span>人數: <?php echo (int)$session->survivor_count; ?></span>
             </div>
             <div class="l4d2-player-meta">
-                <span>開始: <?php echo date('Y-m-d H:i:s', strtotime($session->start_time)); ?></span>
+                <span>開始: <?php echo date('Y-m-d H:i:s', \L4D2Stats\Plugin::mysql_utc($session->start_time)); ?></span>
                 <?php if ($session->end_time): ?>
-                    <span>結束: <?php echo date('Y-m-d H:i:s', strtotime($session->end_time)); ?></span>
+                    <span>結束: <?php echo date('Y-m-d H:i:s', \L4D2Stats\Plugin::mysql_utc($session->end_time)); ?></span>
                 <?php endif; ?>
                 <span>時長: <?php echo \L4D2Stats\Plugin::format_playtime($session->duration); ?></span>
             </div>

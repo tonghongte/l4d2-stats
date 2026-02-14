@@ -1,5 +1,43 @@
 # Changelog
 
+## [1.4.0] - 2026-02-14
+
+### 玩家頭像 + 戰役海報縮圖 + 時區修正
+
+為各頁面加入 Steam 玩家頭像與官方戰役海報縮圖，提升視覺化體驗。同時修正 MySQL UTC 時間在 WordPress 前端顯示偏差的問題。
+
+#### 新增
+
+- **Steam 玩家頭像** — 透過 Steam Web API 批次抓取玩家頭像，快取於資料庫（24 小時過期）
+  - 排行榜：玩家名稱前顯示小頭像 (28px)
+  - 玩家個人頁：header 區域顯示大頭像 (96px)
+  - 戰役場次詳細 / 章節場次詳細：玩家表現表格中顯示小頭像
+  - 玩家搜尋結果：顯示中頭像 (40px)
+  - 無 API Key 或 API 失敗時自動 fallback 至 Steam 預設頭像
+- **官方戰役海報縮圖** — 引用 L4D Wiki (Fandom) 上的 14 張官方戰役海報
+  - 地圖統計列表：戰役名稱前顯示小縮圖
+  - 戰役地圖詳情 / 戰役場次詳細 / 章節場次詳細：標題卡顯示大縮圖
+  - 自訂戰役自動顯示 CSS 佔位圖（灰底地圖圖示）
+- **WordPress 設定頁面** — 後台 Settings > L4D2 Stats，可設定 Steam Web API Key
+- **資料庫自動遷移** — 首次啟用時自動為 `l4d2_players` 新增 `avatar_url` 和 `avatar_updated_at` 欄位，版本旗標避免重複執行
+- **時間處理 Helper** — `Plugin::mysql_utc()` 統一處理 MySQL UTC datetime 轉換
+
+#### 修正
+
+- **時區偏差** — MySQL `NOW()` 儲存 UTC 時間，但 PHP `strtotime()` 以 WordPress 本地時區解讀，導致所有「X 時間前」顯示偏差（如 UTC+8 地區一律多 8 小時）。所有模板的時間顯示改用 `Plugin::mysql_utc()` 正確解析
+
+#### 變更
+
+- `class-plugin.php` — 新增 `$campaign_thumbnails` 映射、`render_campaign_thumbnail()`、`render_avatar()`、`fetch_avatars()`、`mysql_utc()`、設定頁面、DB 遷移
+- `class-leaderboard.php` — SQL 查詢加入 `avatar_url`、`avatar_updated_at`，批次抓取頭像
+- `class-player.php` — 查詢加入頭像欄位，REST 搜尋回傳 `avatar_url`
+- `class-sessiondetail.php` — 兩種模式皆加入頭像抓取
+- 7 個模板檔案加入頭像 / 縮圖顯示 + 時區修正
+- `l4d2-stats.js` — 搜尋結果加入頭像
+- `l4d2-stats.css` — 頭像樣式（圓形、3 種尺寸）、縮圖樣式、佔位圖、響應式調整
+
+---
+
 ## [1.3.0] - 2025-02-14
 
 ### 地圖統計重構 + 共用導航列
