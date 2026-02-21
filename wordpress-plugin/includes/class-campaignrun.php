@@ -52,6 +52,7 @@ class CampaignRun {
                 && !empty($s->campaign_name)
                 && $s->campaign_name === $current['campaign_name']
                 && $current['last_end_time'] !== null
+                && !$current['_campaign_completed']  // 戰役已通關，不再接受新 session
             ) {
                 $gap = strtotime($s->start_time) - strtotime($current['last_end_time']);
                 if ($gap >= 0 && $gap <= self::GAP_THRESHOLD) {
@@ -64,6 +65,10 @@ class CampaignRun {
                 $current['last_end_time'] = $s->end_time ?: $s->start_time;
                 $current['total_duration'] += (int)$s->duration;
                 $current['survivor_count'] = max($current['survivor_count'], (int)$s->survivor_count);
+                // 若此 session 觸發戰役通關，標記群組為已完成
+                if ((int)$s->campaign_completed === 1) {
+                    $current['_campaign_completed'] = true;
+                }
                 // 合併玩家名稱
                 if (!empty($s->player_names)) {
                     foreach (explode(', ', $s->player_names) as $name) {
@@ -89,15 +94,16 @@ class CampaignRun {
                     }
                 }
                 $current = [
-                    'first_session_id' => (int)$s->session_id,
-                    'campaign_name'    => $s->campaign_name ?? '',
-                    'difficulty'       => $s->difficulty,
-                    'start_time'       => $s->start_time,
-                    'last_end_time'    => $s->end_time ?: $s->start_time,
-                    'total_duration'   => (int)$s->duration,
-                    'sessions'         => [$s],
-                    'survivor_count'   => (int)$s->survivor_count,
-                    '_player_set'      => $player_set,
+                    'first_session_id'   => (int)$s->session_id,
+                    'campaign_name'      => $s->campaign_name ?? '',
+                    'difficulty'         => $s->difficulty,
+                    'start_time'         => $s->start_time,
+                    'last_end_time'      => $s->end_time ?: $s->start_time,
+                    'total_duration'     => (int)$s->duration,
+                    'sessions'           => [$s],
+                    'survivor_count'     => (int)$s->survivor_count,
+                    '_player_set'        => $player_set,
+                    '_campaign_completed' => (int)$s->campaign_completed === 1,
                 ];
             }
         }
