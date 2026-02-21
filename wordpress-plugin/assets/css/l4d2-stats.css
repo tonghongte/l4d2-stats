@@ -698,25 +698,86 @@
 /* ============================================================
    Responsive
    ============================================================ */
+
+/* ── 768px：平板 / 手機橫向 ── */
 @media (max-width: 768px) {
+
+    /* Container */
+    .l4d2-stats-container {
+        padding: 0 10px;
+        margin: 12px auto;
+    }
+
+    /* Titles */
+    .l4d2-title {
+        font-size: 20px;
+        margin-bottom: 18px;
+        padding-bottom: 8px;
+    }
+
+    .l4d2-section-title {
+        font-size: 17px;
+        margin: 22px 0 12px;
+    }
+
+    /* Navigation */
+    .l4d2-nav {
+        gap: 4px;
+        padding: 4px;
+        margin-bottom: 20px;
+    }
+
+    .l4d2-nav-item {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+
+    /* Filter bar */
+    .l4d2-filter-btn {
+        padding: 6px 13px;
+        font-size: 12px;
+    }
+
+    /* Stat cards */
     .l4d2-stat-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .l4d2-chart-row {
-        flex-direction: column;
+    .l4d2-stat-value {
+        font-size: 22px;
     }
 
+    /* Player / Session header：垂直堆疊 */
     .l4d2-player-header,
     .l4d2-session-header {
         flex-direction: column;
+        align-items: center;
         text-align: center;
+        padding: 18px;
+        gap: 14px;
+    }
+
+    .l4d2-player-info,
+    .l4d2-session-info {
+        text-align: center;
+        width: 100%;
+    }
+
+    .l4d2-player-name {
+        font-size: 24px;
+    }
+
+    .l4d2-session-map-name {
+        font-size: 20px;
     }
 
     .l4d2-player-meta {
         justify-content: center;
+        gap: 8px;
+        font-size: 12px;
     }
 
+    /* Avatars & thumbnails */
     .l4d2-avatar-large {
         width: 72px;
         height: 72px;
@@ -725,37 +786,224 @@
     .l4d2-thumb-large {
         width: 72px;
         height: 95px;
+        margin-right: 0;
+        margin-bottom: 4px;
+    }
+
+    /* Tables：允許水平捲動（多欄寬表格） */
+    .l4d2-stats-container .dataTables_wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .l4d2-table {
         font-size: 12px;
+        min-width: 480px; /* 防止過度壓縮 */
     }
 
     .l4d2-table thead th,
     .l4d2-table tbody td {
         padding: 8px 10px;
+        white-space: nowrap;
     }
 
-    #l4d2-player-search-input {
-        max-width: 100%;
+    /* DataTables 控制列：垂直堆疊 */
+    .l4d2-stats-container .dataTables_wrapper .dataTables_length,
+    .l4d2-stats-container .dataTables_wrapper .dataTables_filter {
+        float: none;
+        display: block;
+        text-align: left;
+        margin-bottom: 8px;
     }
 
+    .l4d2-stats-container .dataTables_wrapper .dataTables_filter input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* DataTables 分頁：換行 */
+    .l4d2-stats-container .dataTables_wrapper .dataTables_paginate {
+        float: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-top: 10px;
+    }
+
+    .l4d2-stats-container .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 5px 10px !important;
+        font-size: 12px;
+    }
+
+    .l4d2-stats-container .dataTables_wrapper .dataTables_info {
+        float: none;
+        text-align: left;
+        font-size: 12px;
+        margin-top: 6px;
+    }
+
+    /* Charts */
+    .l4d2-chart-row {
+        flex-direction: column;
+    }
+
+    .l4d2-chart-container {
+        padding: 14px;
+    }
+
+    /* Session players column */
+    .l4d2-session-players {
+        max-width: 130px;
+    }
+
+    /* Search */
+    #l4d2-player-search-input,
     #l4d2-search-results {
         max-width: 100%;
     }
 
-    .l4d2-stat-value {
-        font-size: 22px;
+    /* Breadcrumb */
+    .l4d2-breadcrumb {
+        font-size: 12px;
+        word-break: break-all;
+    }
+
+    /* Progress bar */
+    .l4d2-progress-fill {
+        min-width: 28px;
+        font-size: 10px;
     }
 }
 
+/* ── 480px：手機直向 ── */
 @media (max-width: 480px) {
+
+    /* Titles */
+    .l4d2-title {
+        font-size: 18px;
+    }
+
+    .l4d2-section-title {
+        font-size: 15px;
+    }
+
+    /* Navigation：更緊湊 */
+    .l4d2-nav-item {
+        padding: 7px 10px;
+        font-size: 12px;
+    }
+
+    /* Filter */
+    .l4d2-filter-btn {
+        padding: 5px 11px;
+        font-size: 12px;
+    }
+
+    /* Stat cards */
     .l4d2-stat-grid {
-        grid-template-columns: repeat(2, 1fr);
         gap: 8px;
     }
 
     .l4d2-stat-card {
         padding: 12px 8px;
+    }
+
+    .l4d2-stat-value {
+        font-size: 20px;
+    }
+
+    .l4d2-stat-label {
+        font-size: 10px;
+    }
+
+    /* Player header */
+    .l4d2-player-name {
+        font-size: 20px;
+    }
+
+    .l4d2-session-map-name {
+        font-size: 18px;
+    }
+
+    .l4d2-player-header,
+    .l4d2-session-header {
+        padding: 14px;
+    }
+
+    .l4d2-player-meta {
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    /* Tables */
+    .l4d2-table {
+        font-size: 11px;
+    }
+
+    .l4d2-table thead th,
+    .l4d2-table tbody td {
+        padding: 7px 8px;
+    }
+
+    /* DataTables controls */
+    .l4d2-stats-container .dataTables_wrapper .dataTables_length select,
+    .l4d2-stats-container .dataTables_wrapper .dataTables_filter input {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+
+    /* Charts */
+    .l4d2-chart-container {
+        padding: 10px;
+    }
+
+    /* Search result */
+    .l4d2-search-result {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .l4d2-avatar-medium {
+        width: 34px;
+        height: 34px;
+    }
+
+    /* Session players column */
+    .l4d2-session-players {
+        max-width: 90px;
+    }
+}
+
+/* ── 360px：極小螢幕 ── */
+@media (max-width: 360px) {
+
+    .l4d2-stats-container {
+        padding: 0 6px;
+    }
+
+    .l4d2-title {
+        font-size: 16px;
+    }
+
+    .l4d2-nav-item {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+
+    .l4d2-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .l4d2-stat-card {
+        padding: 10px 6px;
+    }
+
+    .l4d2-stat-value {
+        font-size: 18px;
+    }
+
+    .l4d2-player-name {
+        font-size: 18px;
     }
 }
