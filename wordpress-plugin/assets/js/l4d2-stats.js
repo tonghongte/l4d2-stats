@@ -89,9 +89,23 @@
 
     function initDT(selector, opts) {
         var $el = $(selector);
-        if ($el.length && !$.fn.DataTable.isDataTable($el)) {
-            $el.DataTable($.extend({}, dtDefaults, opts));
+        if (!$el.length) return;
+
+        // Already tracked by DataTables - skip
+        if ($.fn.DataTable.isDataTable($el)) return;
+
+        // PJAX may restore cached HTML that already has DataTable wrapper markup
+        // (.dataTable class present but not in DT registry). Extract the table
+        // from the stale wrapper before reinitializing to avoid duplicate controls.
+        if ($el.hasClass('dataTable')) {
+            var $wrapper = $el.closest('.dataTables_wrapper');
+            if ($wrapper.length) {
+                $wrapper.before($el.detach());
+                $wrapper.remove();
+            }
         }
+
+        $el.DataTable($.extend({}, dtDefaults, opts));
     }
 
     // ============================================================
