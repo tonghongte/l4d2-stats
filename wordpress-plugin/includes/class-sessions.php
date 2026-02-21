@@ -7,11 +7,38 @@ namespace L4D2Stats;
 class Sessions {
     public static function render($atts) {
         $atts = shortcode_atts([
-            'limit' => 300,
+            'limit' => 5000,
         ], $atts);
 
         $db = Database::instance();
         $limit = intval($atts['limit']);
+
+        // 時間範圍過濾
+        $allowed_filters = ['7d', '30d', '3m', '6m', 'all'];
+        $filter = isset($_GET['session_filter']) ? sanitize_text_field($_GET['session_filter']) : 'all';
+        if (!in_array($filter, $allowed_filters, true)) {
+            $filter = 'all';
+        }
+
+        switch ($filter) {
+            case '7d':
+                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
+                break;
+            case '30d':
+                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)";
+                break;
+            case '3m':
+                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 MONTH)";
+                break;
+            case '6m':
+                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 6 MONTH)";
+                break;
+            default: // 'all'
+                $where_time = '';
+                break;
+        }
+
+        $cache_key = 'recent_sessions_raw_' . $filter . '_' . $limit;
 
         $sql = "
             SELECT
@@ -28,12 +55,14 @@ class Sessions {
             JOIN l4d2_maps m ON m.id = s.map_id
             LEFT JOIN l4d2_session_players sp ON sp.session_id = s.id
             LEFT JOIN l4d2_players p ON p.id = sp.player_id
+            WHERE 1=1 {$where_time}
             GROUP BY s.id
             ORDER BY s.start_time DESC
             LIMIT %d
         ";
 
-        $sessions_raw = $db->query($sql, [$limit], 'recent_sessions_raw_' . $limit, 60);
+        $sessions_raw = $db->query($sql, [$limit], $cache_key, 60);
+        $current_filter = $filter;
 
         // 反轉為 ASC 以進行分組
         $sessions_asc = array_reverse($sessions_raw);

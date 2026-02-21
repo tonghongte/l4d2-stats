@@ -3,6 +3,25 @@
     <?php echo \L4D2Stats\Plugin::render_nav('l4d2_recent_sessions'); ?>
     <h2 class="l4d2-title">戰役場次記錄</h2>
 
+    <?php
+    $filter_options = [
+        '7d'  => '近 7 天',
+        '30d' => '近 30 天',
+        '3m'  => '近 3 個月',
+        '6m'  => '近 6 個月',
+        'all' => '全部',
+    ];
+    $base_url = strtok($_SERVER['REQUEST_URI'], '?');
+    ?>
+    <div class="l4d2-filter-bar">
+        <?php foreach ($filter_options as $key => $label): ?>
+            <a href="<?php echo esc_url($base_url . '?session_filter=' . $key); ?>"
+               class="l4d2-filter-btn<?php echo ($current_filter === $key) ? ' l4d2-filter-btn-active' : ''; ?>">
+                <?php echo esc_html($label); ?>
+            </a>
+        <?php endforeach; ?>
+    </div>
+
     <?php if (empty($campaign_runs)): ?>
         <div class="l4d2-notice">尚無場次記錄。</div>
     <?php else: ?>
