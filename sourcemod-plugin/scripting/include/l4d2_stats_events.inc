@@ -329,6 +329,10 @@ public void Event_FinaleWin(Event event, const char[] name, bool dontBroadcast)
             g_PlayerStats[i].maps_completed++;
         }
     }
+
+    // 寫入數據並結束場次（含正確時長）
+    FlushAllPlayerStats();
+    EndSession(true);
 }
 
 // ============================================================
