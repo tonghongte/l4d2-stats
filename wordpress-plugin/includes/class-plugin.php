@@ -32,6 +32,7 @@ class Plugin {
         add_shortcode('l4d2_maps',            [Maps::class, 'render']);
         add_shortcode('l4d2_recent_sessions', [Sessions::class, 'render']);
         add_shortcode('l4d2_session_detail',  [SessionDetail::class, 'render']);
+        add_shortcode('l4d2_items',           [Items::class, 'render']);
     }
 
     private function register_assets() {
@@ -182,6 +183,7 @@ class Plugin {
             ['shortcode' => 'l4d2_maps',            'label' => '地圖統計'],
             ['shortcode' => 'l4d2_recent_sessions', 'label' => '場次記錄'],
             ['shortcode' => 'l4d2_weapons',         'label' => '武器統計'],
+            ['shortcode' => 'l4d2_items',           'label' => '道具統計'],
             ['shortcode' => 'l4d2_player_search',   'label' => '搜尋玩家'],
         ];
 

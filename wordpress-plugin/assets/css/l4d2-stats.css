@@ -1025,4 +1025,53 @@
     .l4d2-player-name {
         font-size: 18px;
     }
+
+    .l4d2-items-overview {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================================
+   Items Stats
+   ============================================================ */
+
+.l4d2-items-overview {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    margin-bottom: 30px;
+}
+
+.l4d2-item-card {
+    background: #1e1e1e;
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    padding: 18px 14px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+}
+
+.l4d2-item-card:hover {
+    border-color: #ff4444;
+}
+
+.l4d2-item-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.l4d2-item-label {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.l4d2-item-value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #ff6b6b;
 }
