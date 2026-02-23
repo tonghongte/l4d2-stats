@@ -107,6 +107,14 @@
     color: #fff;
 }
 
+/* Online now indicator */
+.l4d2-online-now {
+    color: #4caf50;
+    font-weight: 600;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+
 /* Notice */
 .l4d2-notice {
     padding: 15px 20px;

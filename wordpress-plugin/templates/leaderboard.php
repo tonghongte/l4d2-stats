@@ -59,8 +59,12 @@
                     <td data-order="<?php echo (int)$p->total_playtime; ?>">
                         <?php echo \L4D2Stats\Plugin::format_playtime($p->total_playtime); ?>
                     </td>
-                    <td data-order="<?php echo \L4D2Stats\Plugin::mysql_utc($p->last_seen); ?>">
-                        <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($p->last_seen)); ?> 前
+                    <td data-order="<?php echo $p->is_online ? PHP_INT_MAX : \L4D2Stats\Plugin::mysql_utc($p->last_seen); ?>">
+                        <?php if ($p->is_online): ?>
+                            <span class="l4d2-online-now">&#9679; 正在遊玩</span>
+                        <?php else: ?>
+                            <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($p->last_seen)); ?> 前
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

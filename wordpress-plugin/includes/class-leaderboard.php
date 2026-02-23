@@ -20,6 +20,13 @@ class Leaderboard {
                 p.id, p.name, p.steam_id, p.steam_id_64,
                 p.total_playtime, p.last_seen,
                 p.avatar_url, p.avatar_updated_at,
+                EXISTS (
+                    SELECT 1 FROM l4d2_session_players sp2
+                    JOIN l4d2_sessions s2 ON s2.id = sp2.session_id
+                    WHERE sp2.player_id = p.id
+                    AND sp2.leave_time IS NULL
+                    AND s2.end_time IS NULL
+                ) AS is_online,
                 ps.kills_infected + ps.kills_si AS total_kills,
                 ps.kills_si,
                 ps.kills_tank,
