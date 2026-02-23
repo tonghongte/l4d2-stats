@@ -135,6 +135,11 @@ class CampaignRun {
         $player_names = array_keys($group['_player_set']);
         sort($player_names);
 
+        // 遊玩中：end_time 為 null 且距 start_time 未超過 3 小時
+        $active_timeout = 10800; // 3 hours in seconds
+        $is_active = ($last->end_time === null)
+            && (time() - strtotime($last->start_time . ' UTC')) < $active_timeout;
+
         return [
             'first_session_id' => $group['first_session_id'],
             'campaign_name'    => $group['campaign_name'],
@@ -148,8 +153,8 @@ class CampaignRun {
             'survivor_count'   => $group['survivor_count'],
             'is_completed'     => $is_completed,
             'is_in_order'      => self::check_in_order($sessions),
-            'is_active'        => ($last->end_time === null),
-            'current_map'      => ($last->end_time === null) ? $last->map_name : null,
+            'is_active'        => $is_active,
+            'current_map'      => $is_active ? $last->map_name : null,
         ];
     }
 

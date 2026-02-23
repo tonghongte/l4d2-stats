@@ -55,7 +55,7 @@ class Sessions {
             LEFT JOIN l4d2_maps m ON m.id = s.map_id
             LEFT JOIN l4d2_session_players sp ON sp.session_id = s.id
             LEFT JOIN l4d2_players p ON p.id = sp.player_id
-            WHERE 1=1 {$where_time}
+            WHERE s.survivor_count > 0 {$where_time}
             GROUP BY s.id
             ORDER BY s.start_time DESC
             LIMIT %d
