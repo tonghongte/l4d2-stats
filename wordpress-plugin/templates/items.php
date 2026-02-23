@@ -1,4 +1,12 @@
-<?php if (!defined('ABSPATH')) exit; ?>
+<?php if (!defined('ABSPATH')) exit;
+
+$item_icons = [
+    'pills'      => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/Pills_1.png/revision/latest/scale-to-width-down/267?cb=20250702231723',
+    'adrenaline' => 'https://static.wikia.nocookie.net/left4dead/images/e/e3/Adrenaline.png/revision/latest/scale-to-width-down/268?cb=20250702231834',
+    'defib'      => 'https://static.wikia.nocookie.net/left4dead/images/3/30/Defibrillator_transparent.png/revision/latest/scale-to-width-down/268?cb=20250702232055',
+    'medkit'     => 'https://static.wikia.nocookie.net/left4dead/images/1/18/Medkit_1.png/revision/latest?cb=20250702231624',
+];
+?>
 <div class="l4d2-stats-container">
     <?php echo \L4D2Stats\Plugin::render_nav('l4d2_items'); ?>
     <h2 class="l4d2-title">道具使用統計</h2>
@@ -7,27 +15,35 @@
     <!-- 伺服器總計卡片 -->
     <div class="l4d2-items-overview">
         <div class="l4d2-item-card">
-            <div class="l4d2-item-icon">💊</div>
+            <div class="l4d2-item-icon">
+                <img src="<?php echo esc_url($item_icons['pills']); ?>" alt="止痛藥" loading="lazy">
+            </div>
             <div class="l4d2-item-label">止痛藥</div>
             <div class="l4d2-item-value"><?php echo number_format((int)$totals->total_pills); ?></div>
         </div>
         <div class="l4d2-item-card">
-            <div class="l4d2-item-icon">💉</div>
+            <div class="l4d2-item-icon">
+                <img src="<?php echo esc_url($item_icons['adrenaline']); ?>" alt="腎上腺素" loading="lazy">
+            </div>
             <div class="l4d2-item-label">腎上腺素</div>
             <div class="l4d2-item-value"><?php echo number_format((int)$totals->total_adrenaline); ?></div>
         </div>
         <div class="l4d2-item-card">
-            <div class="l4d2-item-icon">⚡</div>
+            <div class="l4d2-item-icon">
+                <img src="<?php echo esc_url($item_icons['defib']); ?>" alt="電擊器" loading="lazy">
+            </div>
             <div class="l4d2-item-label">電擊器</div>
             <div class="l4d2-item-value"><?php echo number_format((int)$totals->total_defibs); ?></div>
         </div>
         <div class="l4d2-item-card">
-            <div class="l4d2-item-icon">🩹</div>
+            <div class="l4d2-item-icon">
+                <img src="<?php echo esc_url($item_icons['medkit']); ?>" alt="急救包" loading="lazy">
+            </div>
             <div class="l4d2-item-label">急救包</div>
             <div class="l4d2-item-value"><?php echo number_format((int)$totals->total_heals); ?></div>
         </div>
         <div class="l4d2-item-card">
-            <div class="l4d2-item-icon">🤝</div>
+            <div class="l4d2-item-icon l4d2-item-icon-emoji">🤝</div>
             <div class="l4d2-item-label">救援次數</div>
             <div class="l4d2-item-value"><?php echo number_format((int)$totals->total_revives); ?></div>
         </div>
@@ -45,11 +61,23 @@
             <tr>
                 <th>#</th>
                 <th>玩家</th>
-                <th>止痛藥</th>
-                <th>腎上腺素</th>
-                <th>電擊器</th>
-                <th>急救包</th>
-                <th>救援次數</th>
+                <th>
+                    <img src="<?php echo esc_url($item_icons['pills']); ?>" alt="止痛藥" class="l4d2-th-icon" loading="lazy">
+                    止痛藥
+                </th>
+                <th>
+                    <img src="<?php echo esc_url($item_icons['adrenaline']); ?>" alt="腎上腺素" class="l4d2-th-icon" loading="lazy">
+                    腎上腺素
+                </th>
+                <th>
+                    <img src="<?php echo esc_url($item_icons['defib']); ?>" alt="電擊器" class="l4d2-th-icon" loading="lazy">
+                    電擊器
+                </th>
+                <th>
+                    <img src="<?php echo esc_url($item_icons['medkit']); ?>" alt="急救包" class="l4d2-th-icon" loading="lazy">
+                    急救包
+                </th>
+                <th>🤝 救援次數</th>
                 <th>道具合計</th>
             </tr>
         </thead>

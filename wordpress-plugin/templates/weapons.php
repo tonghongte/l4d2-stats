@@ -31,10 +31,19 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($weapons as $i => $w): ?>
+                <?php foreach ($weapons as $i => $w):
+                    $icon_url = $weapon_icons[$w->weapon_name] ?? '';
+                ?>
                 <tr>
                     <td><?php echo $i + 1; ?></td>
-                    <td><?php echo esc_html($w->display_name); ?></td>
+                    <td>
+                        <?php if ($icon_url): ?>
+                            <img src="<?php echo esc_url($icon_url); ?>"
+                                 alt="<?php echo esc_attr($w->display_name); ?>"
+                                 class="l4d2-weapon-icon" loading="lazy">
+                        <?php endif; ?>
+                        <?php echo esc_html($w->display_name); ?>
+                    </td>
                     <td>
                         <span class="l4d2-weapon-type l4d2-type-<?php echo esc_attr($w->weapon_type); ?>">
                             <?php echo esc_html($type_labels[$w->weapon_type] ?? $w->weapon_type); ?>
