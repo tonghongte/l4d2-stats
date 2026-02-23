@@ -58,7 +58,7 @@
                         <?php
                         $chapter_names = [];
                         foreach ($run['sessions'] as $s) {
-                            $chapter_names[] = $s->map_name;
+                            $chapter_names[] = $s->map_name ?: ($s->map_code ?: '未知地圖');
                         }
                         ?>
                         <span title="<?php echo esc_attr(implode(' → ', $chapter_names)); ?>">

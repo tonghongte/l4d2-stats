@@ -52,7 +52,7 @@ class Sessions {
                 m.is_finale,
                 GROUP_CONCAT(p.name ORDER BY p.name SEPARATOR ', ') AS player_names
             FROM l4d2_sessions s
-            JOIN l4d2_maps m ON m.id = s.map_id
+            LEFT JOIN l4d2_maps m ON m.id = s.map_id
             LEFT JOIN l4d2_session_players sp ON sp.session_id = s.id
             LEFT JOIN l4d2_players p ON p.id = sp.player_id
             WHERE 1=1 {$where_time}
