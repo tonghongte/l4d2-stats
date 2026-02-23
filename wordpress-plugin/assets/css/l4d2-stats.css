@@ -437,6 +437,17 @@
     margin-top: 6px;
 }
 
+.l4d2-search-go-hint {
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.l4d2-search-go-hint code {
+    background: rgba(255,255,255,0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
 #l4d2-search-results {
     max-width: 500px;
     background: #1e1e1e;

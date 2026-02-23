@@ -271,72 +271,87 @@
 
         if (!$searchInput.length) return;
 
+        function runSearch(query) {
+            if (!query || query.length < 2) {
+                $searchResults.empty();
+                return;
+            }
+            $searchResults.html('<div class="l4d2-search-loading">搜尋中...</div>');
+            $.ajax({
+                url: l4d2Stats.rest_url + 'search',
+                method: 'GET',
+                data: { q: query },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', l4d2Stats.nonce);
+                },
+                success: function (data) {
+                    if (!data || data.length === 0) {
+                        $searchResults.html(
+                            '<div class="l4d2-notice">找不到玩家</div>'
+                        );
+                        return;
+                    }
+                    // 網址帶 go=1 時直接跳轉到第一筆玩家頁面
+                    var params = new URLSearchParams(window.location.search);
+                    if (params.get('go') === '1' && data[0]) {
+                        var sep = l4d2Stats.player_page.indexOf('?') !== -1 ? '&' : '?';
+                        var firstUrl = l4d2Stats.player_page + sep + 'steam_id=' +
+                            encodeURIComponent(data[0].steam_id) + '&from=search';
+                        window.location.href = firstUrl;
+                        return;
+                    }
+                    var defaultAvatar = 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg';
+                    var html = '';
+                    data.forEach(function (p) {
+                        var sep = l4d2Stats.player_page.indexOf('?') !== -1 ? '&' : '?';
+                        var playerUrl =
+                            l4d2Stats.player_page +
+                            sep + 'steam_id=' +
+                            encodeURIComponent(p.steam_id) +
+                            '&from=search';
+                        var avatarUrl = p.avatar_url || defaultAvatar;
+                        html +=
+                            '<div class="l4d2-search-result">' +
+                            '<img src="' + escapeHtml(avatarUrl) + '" alt="avatar" class="l4d2-avatar l4d2-avatar-medium" loading="lazy">' +
+                            '<div>' +
+                            '<a href="' + playerUrl + '">' +
+                            escapeHtml(p.name) +
+                            '</a>' +
+                            '<br><span class="l4d2-search-steamid">' +
+                            escapeHtml(p.steam_id) +
+                            '</span>' +
+                            '</div>' +
+                            '<div class="l4d2-search-playtime">' +
+                            formatPlaytime(parseInt(p.total_playtime) || 0) +
+                            '</div>' +
+                            '</div>';
+                    });
+                    $searchResults.html(html);
+                },
+                error: function () {
+                    $searchResults.html(
+                        '<div class="l4d2-notice">搜尋失敗</div>'
+                    );
+                },
+            });
+        }
+
         // 避免 PJAX 重複綁定
         $searchInput.off('input.l4d2').on('input.l4d2', function () {
             clearTimeout(searchTimer);
             var query = $(this).val().trim();
-
             if (query.length < 2) {
                 $searchResults.empty();
                 return;
             }
-
-            $searchResults.html('<div class="l4d2-search-loading">搜尋中...</div>');
-
-            searchTimer = setTimeout(function () {
-                $.ajax({
-                    url: l4d2Stats.rest_url + 'search',
-                    method: 'GET',
-                    data: { q: query },
-                    beforeSend: function (xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', l4d2Stats.nonce);
-                    },
-                    success: function (data) {
-                        if (!data || data.length === 0) {
-                            $searchResults.html(
-                                '<div class="l4d2-notice">找不到玩家</div>'
-                            );
-                            return;
-                        }
-
-                        var defaultAvatar = 'https://avatars.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg';
-                        var html = '';
-                        data.forEach(function (p) {
-                            var sep = l4d2Stats.player_page.indexOf('?') !== -1 ? '&' : '?';
-                            var playerUrl =
-                                l4d2Stats.player_page +
-                                sep + 'steam_id=' +
-                                encodeURIComponent(p.steam_id) +
-                                '&from=search';
-                            var avatarUrl = p.avatar_url || defaultAvatar;
-
-                            html +=
-                                '<div class="l4d2-search-result">' +
-                                '<img src="' + escapeHtml(avatarUrl) + '" alt="avatar" class="l4d2-avatar l4d2-avatar-medium" loading="lazy">' +
-                                '<div>' +
-                                '<a href="' + playerUrl + '">' +
-                                escapeHtml(p.name) +
-                                '</a>' +
-                                '<br><span class="l4d2-search-steamid">' +
-                                escapeHtml(p.steam_id) +
-                                '</span>' +
-                                '</div>' +
-                                '<div class="l4d2-search-playtime">' +
-                                formatPlaytime(parseInt(p.total_playtime) || 0) +
-                                '</div>' +
-                                '</div>';
-                        });
-
-                        $searchResults.html(html);
-                    },
-                    error: function () {
-                        $searchResults.html(
-                            '<div class="l4d2-notice">搜尋失敗</div>'
-                        );
-                    },
-                });
-            }, 300);
+            searchTimer = setTimeout(function () { runSearch(query); }, 300);
         });
+
+        // 透過網址參數帶入搜尋字串時，自動執行搜尋（支援 ?search= 或 ?q=）
+        var initialQuery = $searchInput.val().trim();
+        if (initialQuery.length >= 2) {
+            runSearch(initialQuery);
+        }
     }
 
     // ============================================================
