@@ -357,9 +357,8 @@
         }
         var initialQuery = (fromUrl && fromUrl.length >= 2) ? fromUrl : $searchInput.val().trim();
         if (initialQuery.length >= 2) {
-            // 延遲觸發，確保 PJAX 換頁後 DOM 與綁定已就緒
             setTimeout(function () {
-                $searchInput.trigger('input.l4d2');
+                runSearch(initialQuery);
             }, 150);
         }
     }
