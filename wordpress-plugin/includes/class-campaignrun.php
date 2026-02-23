@@ -148,6 +148,8 @@ class CampaignRun {
             'survivor_count'   => $group['survivor_count'],
             'is_completed'     => $is_completed,
             'is_in_order'      => self::check_in_order($sessions),
+            'is_active'        => ($last->end_time === null),
+            'current_map'      => ($last->end_time === null) ? $last->map_name : null,
         ];
     }
 

@@ -334,6 +334,46 @@
     color: #ffd54f;
 }
 
+.l4d2-badge-active {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0d3320;
+    color: #4caf50;
+    border: 1px solid #2e7d32;
+}
+
+/* 遊玩中脈動圓點 */
+.l4d2-pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4caf50;
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6);
+    animation: l4d2-pulse-anim 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+}
+
+@keyframes l4d2-pulse-anim {
+    0%   { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6); }
+    70%  { box-shadow: 0 0 0 7px rgba(76, 175, 80, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+/* 進行中場次的列高亮 */
+.l4d2-row-active {
+    background: rgba(76, 175, 80, 0.06) !important;
+    border-left: 3px solid #4caf50;
+}
+
+/* 目前地圖名稱提示文字 */
+.l4d2-current-map {
+    color: #4caf50;
+    font-size: 12px;
+    font-weight: 500;
+}
+
 /* ============================================================
    Weapon Type Tags
    ============================================================ */
@@ -1080,15 +1120,33 @@
    Weapon & Item Icons
    ============================================================ */
 
+/* 武器名稱欄：圖示區 + 文字區並排 */
+.l4d2-weapon-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 固定寬度圖示區，靠右對齊讓所有圖示末端對齊 */
+.l4d2-weapon-icon-wrap {
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 90px;
+    flex-shrink: 0;
+}
+
 /* 武器統計表格中的武器圖示 */
 .l4d2-weapon-icon {
-    height: 36px;
+    height: 34px;
     width: auto;
-    max-width: 80px;
+    max-width: 90px;
     object-fit: contain;
-    vertical-align: middle;
-    margin-right: 8px;
     filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
+}
+
+.l4d2-weapon-name-text {
+    white-space: nowrap;
 }
 
 /* 道具統計卡片內的圖示圖片 */
@@ -1109,7 +1167,7 @@
 /* 表頭小圖示 */
 .l4d2-th-icon {
     height: 22px;
-    width: auto;
+    width: 22px;
     object-fit: contain;
     vertical-align: middle;
     margin-right: 4px;

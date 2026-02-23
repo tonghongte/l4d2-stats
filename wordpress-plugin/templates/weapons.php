@@ -36,13 +36,15 @@
                 ?>
                 <tr>
                     <td><?php echo $i + 1; ?></td>
-                    <td>
-                        <?php if ($icon_url): ?>
-                            <img src="<?php echo esc_url($icon_url); ?>"
-                                 alt="<?php echo esc_attr($w->display_name); ?>"
-                                 class="l4d2-weapon-icon" loading="lazy">
-                        <?php endif; ?>
-                        <?php echo esc_html($w->display_name); ?>
+                    <td class="l4d2-weapon-name-cell">
+                        <span class="l4d2-weapon-icon-wrap">
+                            <?php if ($icon_url): ?>
+                                <img src="<?php echo esc_url($icon_url); ?>"
+                                     alt="<?php echo esc_attr($w->display_name); ?>"
+                                     class="l4d2-weapon-icon" loading="lazy">
+                            <?php endif; ?>
+                        </span>
+                        <span class="l4d2-weapon-name-text"><?php echo esc_html($w->display_name); ?></span>
                     </td>
                     <td>
                         <span class="l4d2-weapon-type l4d2-type-<?php echo esc_attr($w->weapon_type); ?>">

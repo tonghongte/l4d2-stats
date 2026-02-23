@@ -39,9 +39,13 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($campaign_runs as $run): ?>
-                <tr>
-                    <td data-order="<?php echo \L4D2Stats\Plugin::mysql_utc($run['start_time']); ?>">
+                <?php foreach ($campaign_runs as $run):
+                    $is_active = !empty($run['is_active']);
+                    // 進行中的場次排序值用極大值推至頂端
+                    $time_order = $is_active ? PHP_INT_MAX : \L4D2Stats\Plugin::mysql_utc($run['start_time']);
+                ?>
+                <tr<?php echo $is_active ? ' class="l4d2-row-active"' : ''; ?>>
+                    <td data-order="<?php echo $time_order; ?>">
                         <a href="<?php echo esc_url(add_query_arg('session_id',
                             (int)$run['first_session_id'],
                             get_permalink(get_page_by_path('session-detail'))
@@ -59,6 +63,9 @@
                         ?>
                         <span title="<?php echo esc_attr(implode(' → ', $chapter_names)); ?>">
                             <?php echo (int)$run['map_count']; ?> 章
+                            <?php if ($is_active && $run['current_map']): ?>
+                                <span class="l4d2-current-map">(<?php echo esc_html($run['current_map']); ?>)</span>
+                            <?php endif; ?>
                         </span>
                     </td>
                     <td>
@@ -74,7 +81,11 @@
                         <?php echo esc_html($run['player_names'] ?: '-'); ?>
                     </td>
                     <td>
-                        <?php if ($run['is_in_order']): ?>
+                        <?php if ($is_active): ?>
+                            <span class="l4d2-badge l4d2-badge-active">
+                                <span class="l4d2-pulse"></span>遊玩中
+                            </span>
+                        <?php elseif ($run['is_in_order']): ?>
                             <span class="l4d2-badge l4d2-badge-gold">依序通關</span>
                         <?php elseif ($run['is_completed']): ?>
                             <span class="l4d2-badge l4d2-badge-success">通關</span>
