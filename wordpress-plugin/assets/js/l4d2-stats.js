@@ -348,7 +348,14 @@
         });
 
         // 透過網址參數帶入搜尋字串時，自動執行搜尋（支援 ?search= 或 ?q=）
-        var initialQuery = $searchInput.val().trim();
+        // 以 URL 為準，避免 PJAX 或快取導致輸入框無值或時序問題
+        var urlParams = new URLSearchParams(window.location.search);
+        var fromUrl = urlParams.get('search') || urlParams.get('q');
+        if (fromUrl !== null && fromUrl !== undefined) {
+            fromUrl = fromUrl.trim();
+            $searchInput.val(fromUrl);
+        }
+        var initialQuery = (fromUrl && fromUrl.length >= 2) ? fromUrl : $searchInput.val().trim();
         if (initialQuery.length >= 2) {
             runSearch(initialQuery);
         }
