@@ -1,5 +1,51 @@
 # Changelog
 
+## [1.5.0] - 2026-02-23
+
+### 道具統計頁面 + 武器/道具圖示 + 進行中場次狀態 + 場次顯示修正
+
+#### 新增
+
+- **道具使用統計頁面** (`[l4d2_items]`) — 全新獨立頁面，顯示伺服器道具使用狀況
+  - 頂部 5 張卡片顯示全伺服器累計：止痛藥、腎上腺素、電擊器、急救包、救援次數
+  - 下方玩家明細表格，可依各道具欄位排序，附 Steam 頭像與玩家連結
+  - 導航列新增「道具統計」按鈕
+
+- **武器圖示** — 武器統計表格的武器名稱欄加入對應圖示
+  - 圖示來源：L4D2 Wiki (static.wikia.nocookie.net)，涵蓋全部 35 種武器
+  - 固定寬度圖示區（90px）靠右對齊，確保所有武器名稱文字左側整齊排列
+
+- **道具圖示** — 道具統計頁面的卡片與表頭使用 L4D2 Wiki 官方道具圖示
+  - 止痛藥、腎上腺素、電擊器、急救包各對應 wiki 圖片
+
+- **場次進行中狀態** — 場次記錄可辨識目前正在遊玩的戰役
+  - 偵測依據：最後一個 session 的 `end_time IS NULL`
+  - 結果欄顯示綠色「遊玩中」badge，帶脈動圓點動畫
+  - 章節欄顯示目前正在遊玩的地圖名稱
+  - 進行中場次整列綠色背景高亮，並強制排序至最頂端
+
+#### 修正
+
+- **場次記錄顯示不完整** — `l4d2_sessions JOIN l4d2_maps` 改為 `LEFT JOIN`，修正因地圖記錄不存在而導致大量舊場次被 INNER JOIN 過濾消失的問題
+  - 沒有地圖對應記錄的場次仍會顯示，戰役欄顯示「自訂地圖」，章節欄顯示「未知地圖」
+
+#### 新增檔案
+
+- `wordpress-plugin/includes/class-items.php`
+- `wordpress-plugin/templates/items.php`
+
+#### 變更
+
+- `class-plugin.php` — 新增 `l4d2_items` shortcode 註冊，導航列加入「道具統計」
+- `class-weapons.php` — 新增 `$weapon_icons` 陣列（35 種武器 → Wiki 圖示 URL 對應）
+- `class-sessions.php` — `JOIN l4d2_maps` 改為 `LEFT JOIN`
+- `class-campaignrun.php` — `finalize_group()` 新增 `is_active`、`current_map` 欄位
+- `templates/weapons.php` — 武器名稱欄加入固定寬度圖示容器
+- `templates/sessions.php` — 加入進行中狀態 badge、目前地圖、頂端排序邏輯、未知地圖 fallback
+- `l4d2-stats.css` — 新增武器/道具圖示樣式、表頭小圖示、遊玩中 badge 與脈動動畫、進行中列高亮
+
+---
+
 ## [1.4.0] - 2026-02-14
 
 ### 玩家頭像 + 戰役海報縮圖 + 時區修正
