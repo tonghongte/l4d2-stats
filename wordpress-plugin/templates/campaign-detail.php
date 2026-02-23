@@ -164,7 +164,7 @@
                 <th>承受傷害</th>
                 <th>死亡</th>
                 <th>倒地</th>
-                <th>命中率</th>
+                <th>特感命中率</th>
                 <th>友傷</th>
             </tr>
         </thead>
@@ -260,7 +260,7 @@
                 <th>傷害</th>
                 <th>射擊</th>
                 <th>命中</th>
-                <th>命中率</th>
+                <th>特感命中率</th>
             </tr>
         </thead>
         <tbody>

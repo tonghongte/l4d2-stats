@@ -120,8 +120,18 @@ public void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
             && GetClientTeam(victim) == TEAM_INFECTED)
         {
             g_PlayerStats[attacker].damage_dealt += damage;
-            g_PlayerStats[attacker].shots_hit++;
-            IncrementWeaponStat(attacker, weaponName, 0, 0, damage, 0, 1);
+
+            // 每次射擊最多計 1 次命中，避免霰彈槍多顆彈丸使命中率超過 100%
+            if (!g_bShotHitThisFire[attacker])
+            {
+                g_PlayerStats[attacker].shots_hit++;
+                g_bShotHitThisFire[attacker] = true;
+                IncrementWeaponStat(attacker, weaponName, 0, 0, damage, 0, 1);
+            }
+            else
+            {
+                IncrementWeaponStat(attacker, weaponName, 0, 0, damage, 0, 0);
+            }
         }
         // 倖存者攻擊倖存者 = 友軍傷害
         else if (victim > 0 && victim <= MaxClients && IsClientInGame(victim)
@@ -219,6 +229,7 @@ public void Event_WeaponFire(Event event, const char[] name, bool dontBroadcast)
     else
     {
         g_PlayerStats[client].shots_fired++;
+        g_bShotHitThisFire[client] = false;  // 每次射擊重置命中旗標
         IncrementWeaponStat(client, weaponName, 0, 0, 0, 1, 0);
     }
 }

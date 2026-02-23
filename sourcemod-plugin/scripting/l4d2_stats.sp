@@ -105,6 +105,9 @@ StringMap g_WeaponStats[MAXPLAYERS + 1];
 int g_iMapKills[MAXPLAYERS + 1];
 int g_iMapDeaths[MAXPLAYERS + 1];
 
+// 每次射擊是否已計算一次命中（防止霰彈槍多顆彈丸重複計算）
+bool g_bShotHitThisFire[MAXPLAYERS + 1];
+
 // Timer
 Handle g_hFlushTimer = null;
 
@@ -275,6 +278,7 @@ void InitPlayerBuffers(int client)
     g_fPlayerJoinTime[client] = GetGameTime();
     g_iMapKills[client] = 0;
     g_iMapDeaths[client] = 0;
+    g_bShotHitThisFire[client] = false;
 }
 
 // 清理玩家緩衝

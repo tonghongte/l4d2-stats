@@ -84,7 +84,7 @@
         </div>
         <div class="l4d2-stat-card">
             <div class="l4d2-stat-value"><?php echo $accuracy; ?>%</div>
-            <div class="l4d2-stat-label">命中率</div>
+            <div class="l4d2-stat-label">特感命中率</div>
         </div>
         <div class="l4d2-stat-card">
             <div class="l4d2-stat-value"><?php echo $hs_rate; ?>%</div>
@@ -143,7 +143,7 @@
                 <th>傷害</th>
                 <th>射擊</th>
                 <th>命中</th>
-                <th>命中率</th>
+                <th>特感命中率</th>
             </tr>
         </thead>
         <tbody>
