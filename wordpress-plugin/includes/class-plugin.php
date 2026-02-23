@@ -49,13 +49,15 @@ class Plugin {
                 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
                 [], '4.4.0', true);
 
-            // 插件自有資源
+            // 插件自有資源（版本號使用檔案修改時間，確保每次更新都能清快取）
+            $css_ver = filemtime(L4D2_STATS_DIR . 'assets/css/l4d2-stats.css') ?: L4D2_STATS_VERSION;
+            $js_ver  = filemtime(L4D2_STATS_DIR . 'assets/js/l4d2-stats.js')  ?: L4D2_STATS_VERSION;
             wp_enqueue_style('l4d2-stats-css',
                 L4D2_STATS_URL . 'assets/css/l4d2-stats.css',
-                [], L4D2_STATS_VERSION);
+                [], $css_ver);
             wp_enqueue_script('l4d2-stats-js',
                 L4D2_STATS_URL . 'assets/js/l4d2-stats.js',
-                ['jquery', 'datatables-js', 'chartjs'], L4D2_STATS_VERSION, true);
+                ['jquery', 'datatables-js', 'chartjs'], $js_ver, true);
 
             // 傳遞參數到 JS
             wp_localize_script('l4d2-stats-js', 'l4d2Stats', [

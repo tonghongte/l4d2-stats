@@ -348,7 +348,6 @@
         });
 
         // 透過網址參數帶入搜尋字串時，自動執行搜尋（支援 ?search= 或 ?q=）
-        // 以 URL 為準並用 trigger 走與手動輸入相同流程，避免時序／PJAX 問題
         var urlParams = new URLSearchParams(window.location.search);
         var fromUrl = urlParams.get('search') || urlParams.get('q');
         if (fromUrl !== null && fromUrl !== undefined) {
@@ -357,9 +356,7 @@
         }
         var initialQuery = (fromUrl && fromUrl.length >= 2) ? fromUrl : $searchInput.val().trim();
         if (initialQuery.length >= 2) {
-            setTimeout(function () {
-                runSearch(initialQuery);
-            }, 150);
+            runSearch(initialQuery);
         }
     }
 
