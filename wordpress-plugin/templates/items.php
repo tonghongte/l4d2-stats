@@ -1,10 +1,10 @@
 <?php if (!defined('ABSPATH')) exit;
 
 $item_icons = [
-    'pills'      => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/Pills_1.png/revision/latest/scale-to-width-down/267?cb=20250702231723',
-    'adrenaline' => 'https://static.wikia.nocookie.net/left4dead/images/e/e3/Adrenaline.png/revision/latest/scale-to-width-down/268?cb=20250702231834',
-    'defib'      => 'https://static.wikia.nocookie.net/left4dead/images/3/30/Defibrillator_transparent.png/revision/latest/scale-to-width-down/268?cb=20250702232055',
-    'medkit'     => 'https://static.wikia.nocookie.net/left4dead/images/1/18/Medkit_1.png/revision/latest?cb=20250702231624',
+    'pills'      => 'https://static.wikia.nocookie.net/left4dead/images/9/9e/Pills_1.png',
+    'adrenaline' => 'https://static.wikia.nocookie.net/left4dead/images/e/e3/Adrenaline.png',
+    'defib'      => 'https://static.wikia.nocookie.net/left4dead/images/3/30/Defibrillator_transparent.png',
+    'medkit'     => 'https://static.wikia.nocookie.net/left4dead/images/1/18/Medkit_1.png',
 ];
 ?>
 <div class="l4d2-stats-container">
