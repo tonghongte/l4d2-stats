@@ -64,6 +64,7 @@
                 <th>#</th>
                 <th>地圖</th>
                 <th>時長</th>
+                <th>難度</th>
                 <th>結果</th>
                 <th>操作</th>
             </tr>
@@ -81,6 +82,11 @@
                     <?php endif; ?>
                 </td>
                 <td><?php echo \L4D2Stats\Plugin::format_playtime($s->duration); ?></td>
+                <td>
+                    <span class="l4d2-difficulty l4d2-diff-<?php echo esc_attr($s->difficulty); ?>">
+                        <?php echo esc_html($difficulty_labels[$s->difficulty] ?? ucfirst($s->difficulty)); ?>
+                    </span>
+                </td>
                 <td>
                     <?php if ((int)$s->campaign_completed): ?>
                         <span class="l4d2-badge l4d2-badge-gold">戰役通關</span>
