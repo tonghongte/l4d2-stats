@@ -343,6 +343,11 @@
     color: #555;
 }
 
+/* 未遊玩地圖列：淡化整列 */
+.l4d2-row-not-played td {
+    opacity: 0.45;
+}
+
 .l4d2-badge-active {
     display: inline-flex;
     align-items: center;

@@ -185,13 +185,10 @@ class SessionDetail {
 
         // 按 map_code 分組（保留首次出現順序）
         $map_groups = [];
-        $mg_idx = 0;
         foreach ($run['sessions'] as $s) {
             $key = $s->map_code;
             if (!isset($map_groups[$key])) {
-                $mg_idx++;
                 $map_groups[$key] = [
-                    'chapter_idx'           => $mg_idx,
                     'map_code'              => $s->map_code,
                     'map_name'              => $s->map_name,
                     'is_finale'             => (int)$s->is_finale,
@@ -200,6 +197,7 @@ class SessionDetail {
                     'completed'             => false,
                     'campaign_completed'    => false,
                     'completion_difficulty' => null,
+                    'not_played'            => false,
                 ];
             }
             $map_groups[$key]['sessions'][] = $s;
@@ -213,6 +211,51 @@ class SessionDetail {
             ) {
                 $map_groups[$key]['completed'] = true;
                 $map_groups[$key]['completion_difficulty'] = $s->difficulty;
+            }
+        }
+
+        // 取得此戰役的完整地圖清單，依章節順序排列
+        $all_campaign_maps = $db->query(
+            "SELECT map_name, display_name, is_finale
+             FROM l4d2_maps
+             WHERE campaign_name = %s
+             ORDER BY map_name ASC",
+            [$run['campaign_name']]
+        );
+
+        // 以完整清單為基準建立最終 map_list；沒遊玩的補上 not_played 項目
+        if (!empty($all_campaign_maps)) {
+            $map_list = [];
+            $idx = 0;
+            foreach ($all_campaign_maps as $cm) {
+                $idx++;
+                $key = $cm->map_name;
+                if (isset($map_groups[$key])) {
+                    $entry = $map_groups[$key];
+                } else {
+                    $entry = [
+                        'map_code'              => $cm->map_name,
+                        'map_name'              => $cm->display_name ?: $cm->map_name,
+                        'is_finale'             => (int)$cm->is_finale,
+                        'sessions'              => [],
+                        'total_duration'        => 0,
+                        'completed'             => false,
+                        'campaign_completed'    => false,
+                        'completion_difficulty' => null,
+                        'not_played'            => true,
+                    ];
+                }
+                $entry['chapter_idx'] = $idx;
+                $map_list[] = $entry;
+            }
+        } else {
+            // 自訂地圖或查無資料時，退回僅列出本次遊玩的地圖
+            $map_list = [];
+            $idx = 0;
+            foreach ($map_groups as $entry) {
+                $idx++;
+                $entry['chapter_idx'] = $idx;
+                $map_list[] = $entry;
             }
         }
 

@@ -74,8 +74,8 @@
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($map_groups as $mg): ?>
-            <tr>
+            <?php foreach ($map_list as $mg): ?>
+            <tr<?php echo $mg['not_played'] ? ' class="l4d2-row-not-played"' : ''; ?>>
                 <td>
                     <span class="l4d2-chapter-num"><?php echo $mg['chapter_idx']; ?></span>
                 </td>
@@ -86,13 +86,23 @@
                     <?php endif; ?>
                 </td>
                 <td>
-                    <?php $play_count = count($mg['sessions']); ?>
-                    <?php echo $play_count; ?> 次
-                    <?php if ($play_count > 1): ?>
-                        <span class="l4d2-badge l4d2-badge-retry">重試 <?php echo $play_count - 1; ?> 次</span>
+                    <?php if ($mg['not_played']): ?>
+                        <span class="l4d2-text-muted">—</span>
+                    <?php else: ?>
+                        <?php $play_count = count($mg['sessions']); ?>
+                        <?php echo $play_count; ?> 次
+                        <?php if ($play_count > 1): ?>
+                            <span class="l4d2-badge l4d2-badge-retry">重試 <?php echo $play_count - 1; ?> 次</span>
+                        <?php endif; ?>
                     <?php endif; ?>
                 </td>
-                <td><?php echo \L4D2Stats\Plugin::format_playtime($mg['total_duration']); ?></td>
+                <td>
+                    <?php if ($mg['not_played']): ?>
+                        <span class="l4d2-text-muted">—</span>
+                    <?php else: ?>
+                        <?php echo \L4D2Stats\Plugin::format_playtime($mg['total_duration']); ?>
+                    <?php endif; ?>
+                </td>
                 <td>
                     <?php if ($mg['completion_difficulty']): ?>
                         <span class="l4d2-difficulty l4d2-diff-<?php echo esc_attr($mg['completion_difficulty']); ?>">
@@ -103,7 +113,9 @@
                     <?php endif; ?>
                 </td>
                 <td>
-                    <?php if ($mg['campaign_completed']): ?>
+                    <?php if ($mg['not_played']): ?>
+                        <span class="l4d2-badge">未遊玩</span>
+                    <?php elseif ($mg['campaign_completed']): ?>
                         <span class="l4d2-badge l4d2-badge-gold">戰役通關</span>
                     <?php elseif ($mg['completed']): ?>
                         <span class="l4d2-badge l4d2-badge-success">通關</span>
@@ -112,14 +124,16 @@
                     <?php endif; ?>
                 </td>
                 <td>
-                    <a href="<?php echo esc_url(add_query_arg([
-                        'session_id' => (int)$run['first_session_id'],
-                        'view'       => 'map_run',
-                        'map_code'   => $mg['map_code'],
-                    ], $detail_base_url)); ?>"
-                       class="l4d2-chapter-detail-link">
-                        查看詳情
-                    </a>
+                    <?php if (!$mg['not_played']): ?>
+                        <a href="<?php echo esc_url(add_query_arg([
+                            'session_id' => (int)$run['first_session_id'],
+                            'view'       => 'map_run',
+                            'map_code'   => $mg['map_code'],
+                        ], $detail_base_url)); ?>"
+                           class="l4d2-chapter-detail-link">
+                            查看詳情
+                        </a>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>
