@@ -35,6 +35,14 @@ public void OnDatabaseConnected(Database db, const char[] error, any data)
     if (mapName[0] != '\0' && g_iSessionId == -1)
     {
         EnsureMapExists(mapName);
+
+        // 種入同一戰役的所有地圖 (自訂地圖支援)
+        char campaignName[128];
+        if (g_MapCampaignNames.GetString(mapName, campaignName, sizeof(campaignName)))
+        {
+            SeedCampaignMaps(campaignName);
+        }
+
         StartSession(mapName);
     }
 }
@@ -196,6 +204,59 @@ public void OnMapIdLoaded(Database db, DBResultSet results, const char[] error, 
         g_iMapId = results.FetchInt(0);
         LogMessage("[L4D2 Stats] 地圖 ID: %d", g_iMapId);
     }
+}
+
+// ============================================================
+// 戰役地圖種子 (自訂地圖用)
+// 當某戰役的任一地圖被遊玩時，將同戰役所有地圖 INSERT IGNORE 到資料庫
+// ============================================================
+void SeedCampaignMaps(const char[] campaignName)
+{
+    if (!g_bDatabaseReady) return;
+
+    StringMapSnapshot snap = g_MapCampaignNames.Snapshot();
+    if (snap == null) return;
+
+    char mapName[64], mapCampaign[128], displayName[128];
+    char escapedMap[129], escapedDisplay[257], escapedCampaign[257];
+
+    g_hDatabase.Escape(campaignName, escapedCampaign, sizeof(escapedCampaign));
+
+    int seeded = 0;
+    for (int i = 0; i < snap.Length; i++)
+    {
+        snap.GetKey(i, mapName, sizeof(mapName));
+
+        // 只處理屬於同一戰役的地圖
+        if (!g_MapCampaignNames.GetString(mapName, mapCampaign, sizeof(mapCampaign)))
+            continue;
+        if (!StrEqual(mapCampaign, campaignName))
+            continue;
+
+        // 查找顯示名稱
+        displayName[0] = '\0';
+        g_MapDisplayNames.GetString(mapName, displayName, sizeof(displayName));
+
+        // 查找是否為終章
+        bool isFinale = false;
+        g_MapIsFinale.GetValue(mapName, isFinale);
+
+        g_hDatabase.Escape(mapName, escapedMap, sizeof(escapedMap));
+        g_hDatabase.Escape(displayName, escapedDisplay, sizeof(escapedDisplay));
+
+        char query[512];
+        FormatEx(query, sizeof(query),
+            "INSERT IGNORE INTO l4d2_maps (map_name, display_name, campaign_name, is_finale, first_played, last_played) VALUES ('%s', '%s', '%s', %d, NOW(), NOW())",
+            escapedMap, escapedDisplay, escapedCampaign, isFinale ? 1 : 0);
+
+        g_hDatabase.Query(OnGenericQuery, query);
+        seeded++;
+    }
+
+    delete snap;
+
+    if (seeded > 0)
+        LogMessage("[L4D2 Stats] 已為戰役 '%s' 種入 %d 個地圖記錄", campaignName, seeded);
 }
 
 // ============================================================

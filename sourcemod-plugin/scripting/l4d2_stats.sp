@@ -118,6 +118,7 @@ ConVar g_cvMinPlaytime;
 // 地圖名稱對照表 (從 MapChanger.l4d2.txt 載入)
 StringMap g_MapDisplayNames;   // map_name -> display_name
 StringMap g_MapCampaignNames;  // map_name -> campaign_name
+StringMap g_MapIsFinale;       // map_name -> bool (true = 終章)
 
 // ============================================================
 // Include Files
@@ -172,6 +173,7 @@ public void OnPluginStart()
     // 載入自訂地圖名稱對照表
     g_MapDisplayNames = new StringMap();
     g_MapCampaignNames = new StringMap();
+    g_MapIsFinale = new StringMap();
     LoadMapNamesFromConfig();
 
     // Late load: 載入已連線的玩家
@@ -201,6 +203,13 @@ public void OnMapStart()
 
     // 註冊地圖到資料庫
     EnsureMapExists(mapName);
+
+    // 種入同一戰役的所有地圖 (自訂地圖支援)
+    char campaignName[128];
+    if (g_MapCampaignNames.GetString(mapName, campaignName, sizeof(campaignName)))
+    {
+        SeedCampaignMaps(campaignName);
+    }
 
     // 開始新場次
     StartSession(mapName);
@@ -361,6 +370,14 @@ void LoadMapNamesFromConfig()
                             if (displayName[0] != '\0')
                             {
                                 g_MapDisplayNames.SetString(mapName, displayName);
+                            }
+                            // 讀取是否為終章
+                            char isFinaleStr[4];
+                            kv.GetString("IsFinale", isFinaleStr, sizeof(isFinaleStr), "0");
+                            if (isFinaleStr[0] == '1')
+                            {
+                                bool finaleVal = true;
+                                g_MapIsFinale.SetValue(mapName, finaleVal);
                             }
                             count++;
                         }

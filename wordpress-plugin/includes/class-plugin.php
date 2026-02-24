@@ -22,6 +22,7 @@ class Plugin {
         $this->register_rewrite_rules();
         $this->register_settings();
         $this->maybe_migrate_db();
+        MapManager::register();
     }
 
     private function register_shortcodes() {
@@ -396,17 +397,114 @@ class Plugin {
     // ============================================================
 
     private function maybe_migrate_db() {
-        $db_version = get_option('l4d2_stats_db_version', 0);
-        if ($db_version >= 1) return;
+        $db_version = (int)get_option('l4d2_stats_db_version', 0);
 
-        $db = Database::instance();
-        $wpdb = $db->get_db();
-        $column = $wpdb->get_results("SHOW COLUMNS FROM l4d2_players LIKE 'avatar_url'");
-        if (empty($column)) {
-            $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_url VARCHAR(255) DEFAULT NULL");
-            $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_updated_at DATETIME DEFAULT NULL");
+        if ($db_version < 1) {
+            $db   = Database::instance();
+            $wpdb = $db->get_db();
+            $column = $wpdb->get_results("SHOW COLUMNS FROM l4d2_players LIKE 'avatar_url'");
+            if (empty($column)) {
+                $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_url VARCHAR(255) DEFAULT NULL");
+                $wpdb->query("ALTER TABLE l4d2_players ADD COLUMN avatar_updated_at DATETIME DEFAULT NULL");
+            }
+            update_option('l4d2_stats_db_version', 1);
+            $db_version = 1;
         }
-        update_option('l4d2_stats_db_version', 1);
+
+        if ($db_version < 2) {
+            self::seed_official_maps();
+            update_option('l4d2_stats_db_version', 2);
+        }
+    }
+
+    /**
+     * 將全部官方 L4D2 / L4D1 章節地圖植入 l4d2_maps 資料表
+     * 使用 INSERT IGNORE，不覆蓋已有資料
+     */
+    public static function seed_official_maps() {
+        $wpdb = Database::instance()->get_db();
+
+        $maps = [
+            // Dead Center
+            ['c1m1_hotel',           'The Hotel',               'Dead Center',    0],
+            ['c1m2_streets',         'The Streets',             'Dead Center',    0],
+            ['c1m3_mall',            'The Mall',                'Dead Center',    0],
+            ['c1m4_atrium',          'The Atrium',              'Dead Center',    1],
+            // Dark Carnival
+            ['c2m1_highway',         'The Highway',             'Dark Carnival',  0],
+            ['c2m2_fairgrounds',     'The Fairgrounds',         'Dark Carnival',  0],
+            ['c2m3_coaster',         'The Coaster',             'Dark Carnival',  0],
+            ['c2m4_barns',           'The Barns',               'Dark Carnival',  0],
+            ['c2m5_concert',         'The Concert',             'Dark Carnival',  1],
+            // Swamp Fever
+            ['c3m1_plankcountry',    'Plank Country',           'Swamp Fever',    0],
+            ['c3m2_swamp',           'The Swamp',               'Swamp Fever',    0],
+            ['c3m3_shantytown',      'Shanty Town',             'Swamp Fever',    0],
+            ['c3m4_plantation',      'The Plantation',          'Swamp Fever',    1],
+            // Hard Rain
+            ['c4m1_milltown_a',      'Milltown (Start)',        'Hard Rain',      0],
+            ['c4m2_sugarmill_a',     'Sugar Mill (Going)',      'Hard Rain',      0],
+            ['c4m3_sugarmill_b',     'Sugar Mill (Return)',     'Hard Rain',      0],
+            ['c4m4_milltown_b',      'Milltown (Return)',       'Hard Rain',      0],
+            ['c4m5_milltown_escape', 'Milltown Escape',         'Hard Rain',      1],
+            // The Parish
+            ['c5m1_waterfront',      'The Waterfront',          'The Parish',     0],
+            ['c5m2_park',            'The Park',                'The Parish',     0],
+            ['c5m3_cemetery',        'The Cemetery',            'The Parish',     0],
+            ['c5m4_quarter',         'The Quarter',             'The Parish',     0],
+            ['c5m5_bridge',          'The Bridge',              'The Parish',     1],
+            // The Passing
+            ['c6m1_riverbank',       'The Riverbank',           'The Passing',    0],
+            ['c6m2_bedlam',          'The Underground',         'The Passing',    0],
+            ['c6m3_port',            'The Port',                'The Passing',    1],
+            // The Sacrifice
+            ['c7m1_docks',           'The Docks',               'The Sacrifice',  0],
+            ['c7m2_barge',           'The Barge',               'The Sacrifice',  0],
+            ['c7m3_port',            'Port Finale',             'The Sacrifice',  1],
+            // No Mercy
+            ['c8m1_apartment',       'The Apartments',          'No Mercy',       0],
+            ['c8m2_subway',          'The Subway',              'No Mercy',       0],
+            ['c8m3_sewers',          'The Sewers',              'No Mercy',       0],
+            ['c8m4_interior',        'The Hospital',            'No Mercy',       0],
+            ['c8m5_rooftop',         'Rooftop Finale',          'No Mercy',       1],
+            // Crash Course
+            ['c9m1_alleys',          'The Alleys',              'Crash Course',   0],
+            ['c9m2_lots',            'The Truck Depot',         'Crash Course',   1],
+            // Death Toll
+            ['c10m1_caves',          'The Caves',               'Death Toll',     0],
+            ['c10m2_drainage',       'The Drains',              'Death Toll',     0],
+            ['c10m3_ranchhouse',     'The Church',              'Death Toll',     0],
+            ['c10m4_mainstreet',     'The Town',                'Death Toll',     0],
+            ['c10m5_houseboat',      'Boathouse Finale',        'Death Toll',     1],
+            // Dead Air
+            ['c11m1_greenhouse',     'The Greenhouse',          'Dead Air',       0],
+            ['c11m2_offices',        'The Crane',               'Dead Air',       0],
+            ['c11m3_garage',         'The Construction Site',   'Dead Air',       0],
+            ['c11m4_terminal',       'The Terminal',            'Dead Air',       0],
+            ['c11m5_runway',         'Runway Finale',           'Dead Air',       1],
+            // Blood Harvest
+            ['c12m1_hilltop',        'The Woods',               'Blood Harvest',  0],
+            ['c12m2_traintunnel',    'The Tunnel',              'Blood Harvest',  0],
+            ['c12m3_bridge',         'The Bridge',              'Blood Harvest',  0],
+            ['c12m4_barn',           'The Train Station',       'Blood Harvest',  0],
+            ['c12m5_cornfield',      'Farmhouse Finale',        'Blood Harvest',  1],
+            // Cold Stream
+            ['c13m1_alpinecreek',    'Alpine Creek',            'Cold Stream',    0],
+            ['c13m2_southpinestream','South Pine Stream',       'Cold Stream',    0],
+            ['c13m3_memorialbridge', 'Memorial Bridge',         'Cold Stream',    0],
+            ['c13m4_cutthroatcreek', 'Cut-throat Creek',        'Cold Stream',    1],
+            // The Last Stand
+            ['c14m1_junkyard',       'The Junkyard',            'The Last Stand', 0],
+            ['c14m2_lighthouse',     'Lighthouse Finale',       'The Last Stand', 1],
+        ];
+
+        foreach ($maps as [$map_name, $display_name, $campaign_name, $is_finale]) {
+            $wpdb->query($wpdb->prepare(
+                "INSERT IGNORE INTO l4d2_maps (map_name, display_name, campaign_name, is_finale)
+                 VALUES (%s, %s, %s, %d)",
+                $map_name, $display_name, $campaign_name, $is_finale
+            ));
+        }
     }
 
     // ============================================================
