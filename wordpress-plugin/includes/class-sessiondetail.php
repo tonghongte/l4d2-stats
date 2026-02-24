@@ -34,6 +34,11 @@ class SessionDetail {
             return self::render_map_detail($session_id);
         }
 
+        if ($view === 'map_run') {
+            $map_code = isset($_GET['map_code']) ? sanitize_text_field($_GET['map_code']) : '';
+            return self::render_map_in_run_detail($session_id, $map_code);
+        }
+
         return self::render_campaign_detail($session_id);
     }
 
@@ -178,8 +183,190 @@ class SessionDetail {
         // 批次抓取頭像
         $avatars = Plugin::fetch_avatars($players);
 
+        // 按 map_code 分組（保留首次出現順序）
+        $map_groups = [];
+        $mg_idx = 0;
+        foreach ($run['sessions'] as $s) {
+            $key = $s->map_code;
+            if (!isset($map_groups[$key])) {
+                $mg_idx++;
+                $map_groups[$key] = [
+                    'chapter_idx'           => $mg_idx,
+                    'map_code'              => $s->map_code,
+                    'map_name'              => $s->map_name,
+                    'is_finale'             => (int)$s->is_finale,
+                    'sessions'              => [],
+                    'total_duration'        => 0,
+                    'completed'             => false,
+                    'campaign_completed'    => false,
+                    'completion_difficulty' => null,
+                ];
+            }
+            $map_groups[$key]['sessions'][] = $s;
+            $map_groups[$key]['total_duration'] += (int)$s->duration;
+            if ((int)$s->campaign_completed) {
+                $map_groups[$key]['campaign_completed'] = true;
+                $map_groups[$key]['completion_difficulty'] = $s->difficulty;
+            } elseif ((int)$s->completed
+                && !$map_groups[$key]['completed']
+                && !$map_groups[$key]['campaign_completed']
+            ) {
+                $map_groups[$key]['completed'] = true;
+                $map_groups[$key]['completion_difficulty'] = $s->difficulty;
+            }
+        }
+
         ob_start();
         include L4D2_STATS_DIR . 'templates/campaign-detail.php';
+        return ob_get_clean();
+    }
+
+    /**
+     * 地圖重試彙總頁面 — 某次戰役 run 中單一地圖的所有嘗試
+     */
+    private static function render_map_in_run_detail($session_id, $map_code) {
+        if (empty($map_code)) {
+            return self::render_campaign_detail($session_id);
+        }
+
+        $db = Database::instance();
+
+        $run = CampaignRun::find_run_for_session($session_id);
+        if (!$run) {
+            return self::render_map_detail($session_id);
+        }
+
+        // 篩選此地圖的所有 session
+        $map_sessions = array_values(array_filter($run['sessions'], function ($s) use ($map_code) {
+            return $s->map_code === $map_code;
+        }));
+
+        if (empty($map_sessions)) {
+            return self::render_campaign_detail($session_id);
+        }
+
+        $map_info    = $map_sessions[0];
+        $session_ids = array_map(fn($s) => (int)$s->session_id, $map_sessions);
+        $ids_ph      = implode(',', $session_ids);
+
+        // 聚合玩家數據
+        $players = $db->query(
+            "SELECT
+                p.name, p.steam_id, p.steam_id_64,
+                p.avatar_url, p.avatar_updated_at,
+                SUM(COALESCE(sps.kills_infected, 0)) AS kills_infected,
+                SUM(COALESCE(sps.kills_si, 0)) AS kills_si,
+                SUM(COALESCE(sps.kills_witch, 0)) AS kills_witch,
+                SUM(COALESCE(sps.kills_tank, 0)) AS kills_tank,
+                SUM(COALESCE(sps.headshots, 0)) AS headshots,
+                SUM(COALESCE(sps.damage_dealt, 0)) AS damage_dealt,
+                SUM(COALESCE(sps.damage_taken, 0)) AS damage_taken,
+                SUM(COALESCE(sps.deaths, 0)) AS deaths,
+                SUM(COALESCE(sps.incaps, 0)) AS incaps,
+                SUM(COALESCE(sps.revives_given, 0)) AS revives_given,
+                SUM(COALESCE(sps.revives_received, 0)) AS revives_received,
+                SUM(COALESCE(sps.heals_given, 0)) AS heals_given,
+                SUM(COALESCE(sps.heals_received, 0)) AS heals_received,
+                SUM(COALESCE(sps.health_restored, 0)) AS health_restored,
+                SUM(COALESCE(sps.pills_used, 0)) AS pills_used,
+                SUM(COALESCE(sps.adrenaline_used, 0)) AS adrenaline_used,
+                SUM(COALESCE(sps.defibs_used, 0)) AS defibs_used,
+                SUM(COALESCE(sps.friendly_fire_dealt, 0)) AS friendly_fire_dealt,
+                SUM(COALESCE(sps.friendly_fire_damage, 0)) AS friendly_fire_damage,
+                SUM(COALESCE(sps.shots_fired, 0)) AS shots_fired,
+                SUM(COALESCE(sps.shots_hit, 0)) AS shots_hit,
+                SUM(COALESCE(sps.melee_swings, 0)) AS melee_swings,
+                SUM(COALESCE(sps.melee_hits, 0)) AS melee_hits,
+                (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
+                CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
+                     THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
+                     ELSE 0
+                END AS accuracy,
+                CASE WHEN (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) > 0
+                     THEN ROUND(SUM(COALESCE(sps.headshots, 0)) / (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) * 100, 1)
+                     ELSE 0
+                END AS hs_rate
+             FROM l4d2_session_players sp
+             JOIN l4d2_players p ON p.id = sp.player_id
+             LEFT JOIN l4d2_session_player_stats sps
+                  ON sps.session_id = sp.session_id AND sps.player_id = sp.player_id
+             WHERE sp.session_id IN ({$ids_ph})
+             GROUP BY p.id
+             ORDER BY total_kills DESC"
+        );
+
+        $has_stats = false;
+        foreach ($players as $p) {
+            if ((int)$p->total_kills > 0 || (int)$p->damage_dealt > 0 || (int)$p->shots_fired > 0) {
+                $has_stats = true;
+                break;
+            }
+        }
+
+        // 武器數據
+        $weapons = $db->query(
+            "SELECT
+                p.name AS player_name,
+                w.display_name AS weapon_name, w.weapon_type,
+                SUM(spws.kills) AS kills,
+                SUM(spws.headshots) AS headshots,
+                SUM(spws.damage_dealt) AS damage_dealt,
+                SUM(spws.shots_fired) AS shots_fired,
+                SUM(spws.shots_hit) AS shots_hit,
+                CASE WHEN SUM(spws.shots_fired) > 0
+                     THEN ROUND(SUM(spws.shots_hit) / SUM(spws.shots_fired) * 100, 1)
+                     ELSE 0
+                END AS accuracy
+             FROM l4d2_session_player_weapon_stats spws
+             JOIN l4d2_players p ON p.id = spws.player_id
+             JOIN l4d2_weapons w ON w.id = spws.weapon_id
+             WHERE spws.session_id IN ({$ids_ph})
+             GROUP BY spws.player_id, spws.weapon_id
+             ORDER BY kills DESC"
+        );
+
+        $weapon_summary = $db->query(
+            "SELECT
+                w.display_name,
+                SUM(spws.kills) AS total_kills
+             FROM l4d2_session_player_weapon_stats spws
+             JOIN l4d2_weapons w ON w.id = spws.weapon_id
+             WHERE spws.session_id IN ({$ids_ph})
+             GROUP BY spws.weapon_id
+             HAVING total_kills > 0
+             ORDER BY total_kills DESC
+             LIMIT 10"
+        );
+
+        $chart_kills_labels  = [];
+        $chart_kills_data    = [];
+        $chart_damage_labels = [];
+        $chart_damage_data   = [];
+        foreach ($players as $p) {
+            $chart_kills_labels[]  = $p->name;
+            $chart_kills_data[]    = (int)$p->total_kills;
+            $chart_damage_labels[] = $p->name;
+            $chart_damage_data[]   = (int)$p->damage_dealt;
+        }
+
+        $chart_weapon_labels = [];
+        $chart_weapon_data   = [];
+        foreach ($weapon_summary as $ws) {
+            $chart_weapon_labels[] = $ws->display_name;
+            $chart_weapon_data[]   = (int)$ws->total_kills;
+        }
+
+        $difficulty_labels = [
+            'easy'       => '簡單',
+            'normal'     => '普通',
+            'hard'       => '進階',
+            'impossible' => '專家',
+        ];
+
+        $avatars = Plugin::fetch_avatars($players);
+
+        ob_start();
+        include L4D2_STATS_DIR . 'templates/campaign-map-run.php';
         return ob_get_clean();
     }
 

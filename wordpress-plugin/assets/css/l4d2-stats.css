@@ -334,6 +334,15 @@
     color: #ffd54f;
 }
 
+.l4d2-badge-retry {
+    background: #2d3a50;
+    color: #90b8f8;
+}
+
+.l4d2-text-muted {
+    color: #555;
+}
+
 .l4d2-badge-active {
     display: inline-flex;
     align-items: center;
