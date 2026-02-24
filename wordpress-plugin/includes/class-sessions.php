@@ -22,16 +22,16 @@ class Sessions {
 
         switch ($filter) {
             case '7d':
-                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 7 DAY)";
+                $where_time = "AND s.start_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
                 break;
             case '30d':
-                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 30 DAY)";
+                $where_time = "AND s.start_time >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
                 break;
             case '3m':
-                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 3 MONTH)";
+                $where_time = "AND s.start_time >= DATE_SUB(NOW(), INTERVAL 3 MONTH)";
                 break;
             case '6m':
-                $where_time = "AND s.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 6 MONTH)";
+                $where_time = "AND s.start_time >= DATE_SUB(NOW(), INTERVAL 6 MONTH)";
                 break;
             default: // 'all'
                 $where_time = '';

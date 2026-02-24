@@ -39,7 +39,7 @@
             </div>
             <div class="l4d2-player-meta">
                 <?php if ($campaign_stats->first_played): ?>
-                    <span>首次遊玩: <?php echo date('Y-m-d', \L4D2Stats\Plugin::mysql_utc($campaign_stats->first_played)); ?></span>
+                    <span>首次遊玩: <?php echo wp_date('Y-m-d', \L4D2Stats\Plugin::mysql_utc($campaign_stats->first_played)); ?></span>
                 <?php endif; ?>
                 <?php if ($campaign_stats->last_played): ?>
                     <span>最後遊玩: <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($campaign_stats->last_played)); ?> 前</span>

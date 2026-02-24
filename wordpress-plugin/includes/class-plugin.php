@@ -248,13 +248,18 @@ class Plugin {
     // ============================================================
 
     /**
-     * 將 MySQL datetime (UTC) 轉為 Unix timestamp
-     * SourceMod 使用 NOW() 存入的是 MySQL server 時間 (UTC)，
-     * 但 PHP strtotime() 會以 WP 本地時區解讀，導致偏差。
+     * 將 MySQL datetime 轉為 Unix timestamp (UTC)
+     * SourceMod 使用 NOW() 存入的是 MySQL server 時間（與 WP 時區相同，例如 Asia/Taipei）。
+     * 使用 wp_timezone() 正確解讀本地時間，再轉為 UTC Unix timestamp。
      */
     public static function mysql_utc($datetime) {
         if (empty($datetime)) return 0;
-        return strtotime($datetime . ' UTC');
+        try {
+            $dt = new \DateTime($datetime, wp_timezone());
+            return $dt->getTimestamp();
+        } catch (\Exception $e) {
+            return 0;
+        }
     }
 
     // ============================================================
