@@ -24,7 +24,7 @@
             </h3>
             <div class="l4d2-player-meta">
                 <span>章節: <?php echo (int)$campaign_stats->chapter_count; ?> 章</span>
-                <span>總遊玩: <?php echo number_format((int)$campaign_stats->total_plays); ?> 次</span>
+                <span>總遊玩: <?php echo number_format((int)$campaign_stats->total_plays); ?> 場次</span>
                 <span>總通關: <?php echo number_format((int)$campaign_stats->total_completions); ?> 次</span>
             </div>
             <div class="l4d2-player-meta">
