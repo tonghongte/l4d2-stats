@@ -134,7 +134,7 @@ class Maps {
                  JOIN l4d2_sessions s ON s.id = sp.session_id
                  WHERE s.map_id = m.id) AS unique_players
             FROM l4d2_maps m
-            WHERE m.times_played > 0 AND m.campaign_name = %s
+            WHERE m.campaign_name = %s
             ORDER BY m.map_name
         ";
 

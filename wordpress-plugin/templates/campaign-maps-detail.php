@@ -74,27 +74,38 @@
         </thead>
         <tbody>
             <?php foreach ($maps as $m): ?>
-            <tr>
+            <tr<?php if (!(int)$m->times_played): ?> class="l4d2-row-not-played"<?php endif; ?>>
                 <td>
                     <?php echo esc_html($m->display_name ?: $m->map_name); ?>
                     <?php if ($m->is_finale): ?>
                         <span class="l4d2-badge l4d2-badge-gold">Finale</span>
                     <?php endif; ?>
+                    <?php if (!(int)$m->times_played): ?>
+                        <span class="l4d2-text-muted" style="font-size:0.8em;">未遊玩</span>
+                    <?php endif; ?>
                 </td>
                 <td data-order="<?php echo (int)$m->times_played; ?>">
-                    <?php echo number_format((int)$m->times_played); ?>
+                    <?php if ((int)$m->times_played): ?>
+                        <?php echo number_format((int)$m->times_played); ?>
+                    <?php else: ?>
+                        -
+                    <?php endif; ?>
                 </td>
                 <td data-order="<?php echo (int)$m->times_completed; ?>">
-                    <?php echo number_format((int)$m->times_completed); ?>
+                    <?php echo (int)$m->times_played ? number_format((int)$m->times_completed) : '-'; ?>
                 </td>
                 <td data-order="<?php echo $m->completion_rate; ?>">
-                    <div class="l4d2-progress-bar">
-                        <div class="l4d2-progress-fill" style="width: <?php echo min(100, $m->completion_rate); ?>%">
-                            <?php echo $m->completion_rate; ?>%
+                    <?php if ((int)$m->times_played): ?>
+                        <div class="l4d2-progress-bar">
+                            <div class="l4d2-progress-fill" style="width: <?php echo min(100, $m->completion_rate); ?>%">
+                                <?php echo $m->completion_rate; ?>%
+                            </div>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        -
+                    <?php endif; ?>
                 </td>
-                <td><?php echo (int)$m->unique_players; ?></td>
+                <td><?php echo (int)$m->times_played ? (int)$m->unique_players : '-'; ?></td>
                 <td data-order="<?php echo $m->last_played ? \L4D2Stats\Plugin::mysql_utc($m->last_played) : 0; ?>">
                     <?php if ($m->last_played): ?>
                         <?php echo human_time_diff(\L4D2Stats\Plugin::mysql_utc($m->last_played)); ?> 前
