@@ -140,6 +140,13 @@ class Maps {
 
         $maps = $db->query($sql, [$campaign_name], 'maps_detail_' . $campaign_name, 120);
 
+        // 依章節編號排序（相容標準地圖 c\d+m\d+ 及自訂地圖尾數編號）
+        if (!empty($maps)) {
+            usort($maps, fn($a, $b) =>
+                CampaignRun::map_chapter_order($a->map_name) <=> CampaignRun::map_chapter_order($b->map_name)
+            );
+        }
+
         if (empty($maps)) {
             return '<div class="l4d2-notice">找不到此戰役的地圖資料。</div>';
         }

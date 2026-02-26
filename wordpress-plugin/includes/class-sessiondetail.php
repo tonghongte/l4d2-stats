@@ -222,6 +222,12 @@ class SessionDetail {
              ORDER BY map_name ASC",
             [$run['campaign_name']]
         );
+        // 依章節編號排序（相容標準地圖 c\d+m\d+ 及自訂地圖尾數編號）
+        if (!empty($all_campaign_maps)) {
+            usort($all_campaign_maps, fn($a, $b) =>
+                CampaignRun::map_chapter_order($a->map_name) <=> CampaignRun::map_chapter_order($b->map_name)
+            );
+        }
 
         // 以完整清單為基準建立最終 map_list；沒遊玩的補上 not_played 項目
         if (!empty($all_campaign_maps)) {

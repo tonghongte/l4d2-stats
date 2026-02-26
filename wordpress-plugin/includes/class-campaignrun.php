@@ -27,6 +27,26 @@ class CampaignRun {
     }
 
     /**
+     * 取得地圖章節排序鍵（用於 usort）
+     * - 標準 L4D2 地圖 (c1m2_streets) → 章節號 2
+     * - 自訂地圖尾數編號 (Pt_home1) → 尾數 1
+     * - 其他 → 0
+     *
+     * @return int
+     */
+    public static function map_chapter_order(string $map_name): int {
+        // 標準 L4D2 格式: c\d+m(\d+)...
+        if (preg_match('/^c\d+m(\d+)/i', $map_name, $m)) {
+            return (int)$m[1];
+        }
+        // 自訂地圖：取名稱尾端的數字
+        if (preg_match('/(\d+)\D*$/', $map_name, $m)) {
+            return (int)$m[1];
+        }
+        return 0;
+    }
+
+    /**
      * 將 session 陣列分組為戰役場次
      *
      * @param array $sessions 按 start_time ASC 排序的 session 物件陣列
