@@ -183,6 +183,22 @@ class SessionDetail {
         // 批次抓取頭像
         $avatars = Plugin::fetch_avatars($players);
 
+        // 附加成就（需玩家數據）
+        $run_total_deaths = 0;
+        $run_total_ff     = 0;
+        foreach ($players as $p) {
+            $run_total_deaths += (int)$p->deaths;
+            $run_total_ff     += (int)$p->friendly_fire_damage;
+        }
+        $is_no_death = $has_stats && $run['is_completed'] && $run_total_deaths === 0;
+        $is_no_ff    = $has_stats && $run['is_completed'] && $run_total_ff === 0;
+
+        // 玩家亮點卡片（多玩家才顯示）
+        $spotlights = [];
+        if ($has_stats && count($players) > 1) {
+            $spotlights = self::compute_spotlights($players, $avatars);
+        }
+
         // 按 map_code 分組（保留首次出現順序）
         $map_groups = [];
         foreach ($run['sessions'] as $s) {
@@ -417,6 +433,64 @@ class SessionDetail {
         ob_start();
         include L4D2_STATS_DIR . 'templates/campaign-map-run.php';
         return ob_get_clean();
+    }
+
+    /**
+     * 計算玩家亮點卡片（每個類別最突出的玩家）
+     */
+    private static function compute_spotlights(array $players, array $avatars): array {
+        $spots = [];
+        $mx_kills = $mx_damage = $mx_hs = $mx_si = null;
+        $mx_revives = $mx_heals = $mx_deaths = $mx_ff = null;
+        $mx_taken = $mx_acc = null;
+
+        foreach ($players as $p) {
+            if ($mx_kills   === null || (int)$p->total_kills          > (int)$mx_kills->total_kills)          $mx_kills   = $p;
+            if ($mx_damage  === null || (int)$p->damage_dealt         > (int)$mx_damage->damage_dealt)        $mx_damage  = $p;
+            if ($mx_hs      === null || (int)$p->headshots            > (int)$mx_hs->headshots)               $mx_hs      = $p;
+            if ($mx_si      === null || (int)$p->kills_si             > (int)$mx_si->kills_si)                $mx_si      = $p;
+            if ($mx_revives === null || (int)$p->revives_given        > (int)$mx_revives->revives_given)      $mx_revives = $p;
+            if ($mx_heals   === null || (int)$p->heals_given          > (int)$mx_heals->heals_given)          $mx_heals   = $p;
+            if ($mx_deaths  === null || (int)$p->deaths               > (int)$mx_deaths->deaths)              $mx_deaths  = $p;
+            if ($mx_ff      === null || (int)$p->friendly_fire_damage > (int)$mx_ff->friendly_fire_damage)    $mx_ff      = $p;
+            if ($mx_taken   === null || (int)$p->damage_taken         > (int)$mx_taken->damage_taken)         $mx_taken   = $p;
+            if ((int)$p->shots_fired >= 100 && ($mx_acc === null || (float)$p->accuracy > (float)$mx_acc->accuracy)) {
+                $mx_acc = $p;
+            }
+        }
+
+        $push = function($label, $player, $value, $color) use (&$spots, $avatars) {
+            $spots[] = [
+                'label'  => $label,
+                'player' => $player,
+                'value'  => $value,
+                'color'  => $color,
+                'avatar' => $avatars[$player->steam_id_64] ?? Plugin::DEFAULT_AVATAR,
+            ];
+        };
+
+        if ($mx_kills   !== null && (int)$mx_kills->total_kills > 0)
+            $push('最多擊殺', $mx_kills, number_format((int)$mx_kills->total_kills) . ' 殺', 'red');
+        if ($mx_damage  !== null && (int)$mx_damage->damage_dealt > 0)
+            $push('最高傷害', $mx_damage, number_format((int)$mx_damage->damage_dealt), 'orange');
+        if ($mx_hs      !== null && (int)$mx_hs->headshots > 0)
+            $push('最多爆頭', $mx_hs, number_format((int)$mx_hs->headshots) . ' 次', 'purple');
+        if ($mx_si      !== null && (int)$mx_si->kills_si > 0)
+            $push('特感獵人', $mx_si, number_format((int)$mx_si->kills_si) . ' 殺', 'green');
+        if ($mx_acc     !== null)
+            $push('神槍手', $mx_acc, $mx_acc->accuracy . '%', 'blue');
+        if ($mx_revives !== null && (int)$mx_revives->revives_given > 0)
+            $push('救援英雄', $mx_revives, (int)$mx_revives->revives_given . ' 次', 'teal');
+        if ($mx_heals   !== null && (int)$mx_heals->heals_given > 0)
+            $push('醫療兵', $mx_heals, (int)$mx_heals->heals_given . ' 次', 'cyan');
+        if ($mx_taken   !== null && (int)$mx_taken->damage_taken > 0)
+            $push('吸彈海綿', $mx_taken, number_format((int)$mx_taken->damage_taken), 'gray');
+        if ($mx_deaths  !== null && (int)$mx_deaths->deaths > 0)
+            $push('替死鬼', $mx_deaths, (int)$mx_deaths->deaths . ' 死', 'dark');
+        if ($mx_ff      !== null && (int)$mx_ff->friendly_fire_damage > 0)
+            $push('隊友之殤', $mx_ff, number_format((int)$mx_ff->friendly_fire_damage), 'darkred');
+
+        return $spots;
     }
 
     /**

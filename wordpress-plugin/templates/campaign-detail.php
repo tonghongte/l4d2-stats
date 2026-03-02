@@ -46,15 +46,47 @@
             </div>
             <div class="l4d2-player-meta" style="margin-top: 8px;">
                 <?php if ($run['is_in_order']): ?>
-                    <span class="l4d2-badge l4d2-badge-gold">依序通關</span>
+                    <span class="l4d2-badge l4d2-badge-gold" title="從第1章依序通關、同一難度、全程無失敗">依序通關</span>
                 <?php elseif ($run['is_completed']): ?>
                     <span class="l4d2-badge l4d2-badge-success">通關</span>
                 <?php else: ?>
                     <span class="l4d2-badge l4d2-badge-fail">未通關</span>
                 <?php endif; ?>
+                <?php if (!empty($run['is_no_retry'])): ?>
+                    <span class="l4d2-badge l4d2-badge-cyan" title="全程無重試，每關一次通過">零重試</span>
+                <?php endif; ?>
+                <?php if (!empty($run['is_speed_run'])): ?>
+                    <span class="l4d2-badge l4d2-badge-speed" title="通關且平均每章不到25分鐘">速通</span>
+                <?php endif; ?>
+                <?php if (!empty($run['is_expert_clear'])): ?>
+                    <span class="l4d2-badge l4d2-badge-expert" title="在專家難度下完成通關">專家通關</span>
+                <?php endif; ?>
+                <?php if (!empty($is_no_death)): ?>
+                    <span class="l4d2-badge l4d2-badge-platinum" title="全程所有玩家零死亡">零死亡</span>
+                <?php endif; ?>
+                <?php if (!empty($is_no_ff)): ?>
+                    <span class="l4d2-badge l4d2-badge-teal" title="全程無任何友傷">零友傷</span>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+
+    <!-- 玩家亮點卡片 -->
+    <?php if (!empty($spotlights)): ?>
+    <h3 class="l4d2-section-title">玩家亮點</h3>
+    <div class="l4d2-spotlights">
+        <?php foreach ($spotlights as $sp): ?>
+        <div class="l4d2-spotlight-card l4d2-sp-<?php echo esc_attr($sp['color']); ?>">
+            <div class="l4d2-sp-label"><?php echo esc_html($sp['label']); ?></div>
+            <div class="l4d2-sp-player">
+                <?php echo \L4D2Stats\Plugin::render_avatar($sp['avatar'], 'small'); ?>
+                <span><?php echo esc_html($sp['player']->name); ?></span>
+            </div>
+            <div class="l4d2-sp-value"><?php echo esc_html($sp['value']); ?></div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
     <!-- 章節列表 -->
     <?php

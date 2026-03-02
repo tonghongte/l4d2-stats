@@ -152,6 +152,22 @@ class CampaignRun {
             }
         }
 
+        // 零重試：每個 map_code 只遊玩一次
+        $map_play_counts = [];
+        foreach ($sessions as $s) {
+            $mc = $s->map_code;
+            $map_play_counts[$mc] = ($map_play_counts[$mc] ?? 0) + 1;
+        }
+        $is_no_retry = $is_completed && !empty($map_play_counts) && max($map_play_counts) <= 1;
+
+        // 速通：通關且平均每章 < 25 分鐘 (1500 秒)
+        $unique_map_count = count($map_play_counts);
+        $avg_dur = $unique_map_count > 0 ? $group['total_duration'] / $unique_map_count : 0;
+        $is_speed_run = $is_completed && $unique_map_count >= 2 && $avg_dur < 1500;
+
+        // 專家難度通關
+        $is_expert_clear = $is_completed && $group['difficulty'] === 'impossible';
+
         $player_names = array_keys($group['_player_set']);
         sort($player_names);
 
@@ -173,6 +189,9 @@ class CampaignRun {
             'survivor_count'   => $group['survivor_count'],
             'is_completed'     => $is_completed,
             'is_in_order'      => self::check_in_order($sessions),
+            'is_no_retry'      => $is_no_retry,
+            'is_speed_run'     => $is_speed_run,
+            'is_expert_clear'  => $is_expert_clear,
             'is_active'        => $is_active,
             'current_map'      => $is_active ? $last->map_name : null,
         ];

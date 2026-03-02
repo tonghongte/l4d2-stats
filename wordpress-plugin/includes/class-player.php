@@ -127,9 +127,86 @@ class Player {
             $weapon_chart_kills[] = (int)$w->kills;
         }
 
+        // 計算個人成就
+        $achievements = self::compute_player_achievements($player, $maps);
+
         ob_start();
         include L4D2_STATS_DIR . 'templates/player-profile.php';
         return ob_get_clean();
+    }
+
+    /**
+     * 計算玩家個人成就陣列
+     * 每項成就包含: id, name, desc, tier (gold/silver/bronze/special)
+     */
+    private static function compute_player_achievements($player, array $maps): array {
+        $achievements = [];
+        $total_kills  = (int)$player->kills_infected + (int)$player->kills_si;
+        $map_count    = count($maps);
+        $pt           = (int)$player->total_playtime;
+        $fired        = (int)$player->shots_fired;
+        $acc          = $fired > 0 ? round((int)$player->shots_hit / $fired * 100, 1) : 0;
+
+        // 階梯式成就：[id, 顯示名稱, 說明前綴, [金門檻, 銀門檻, 銅門檻], 實際數值]
+        $tiered = [
+            ['kill_machine',    '殺戮機器', '總擊殺',       [10000, 5000, 1000],  $total_kills],
+            ['hs_king',         '爆頭王',   '爆頭數',       [3000, 1000, 300],    (int)$player->headshots],
+            ['si_hunter',       '特感獵人', '特感擊殺',     [500, 200, 50],       (int)$player->kills_si],
+            ['tank_slayer',     '坦克剋星', 'Tank 擊殺',    [100, 50, 10],        (int)$player->kills_tank],
+            ['witch_slayer',    '女巫剋星', 'Witch 擊殺',   [50, 20, 5],          (int)$player->kills_witch],
+            ['rescue_hero',     '救援英雄', '救援次數',     [200, 100, 30],       (int)$player->revives_given],
+            ['medic',           '醫療兵',   '治療次數',     [100, 50, 20],        (int)$player->heals_given],
+            ['campaign_master', '戰役達人', '戰役通關',     [50, 20, 5],          (int)$player->campaigns_completed],
+            ['melee_master',    '格鬥家',   '近身命中',     [500, 200, 50],       (int)$player->melee_hits],
+            ['defibrillator',   '電擊重生', '電擊器使用',   [50, 20, 5],          (int)$player->defibs_used],
+            ['explorer',        '地圖探索家','遊玩地圖種類', [50, 30, 10],         $map_count],
+        ];
+
+        foreach ($tiered as [$id, $name, $desc_base, [$gold, $silver, $bronze], $val]) {
+            if ($val >= $gold)
+                $achievements[] = ['id' => $id, 'name' => $name, 'desc' => "{$desc_base}: {$val}", 'tier' => 'gold'];
+            elseif ($val >= $silver)
+                $achievements[] = ['id' => $id, 'name' => $name, 'desc' => "{$desc_base}: {$val}", 'tier' => 'silver'];
+            elseif ($val >= $bronze)
+                $achievements[] = ['id' => $id, 'name' => $name, 'desc' => "{$desc_base}: {$val}", 'tier' => 'bronze'];
+        }
+
+        // 老手（遊玩時間）
+        if ($pt >= 72000)
+            $achievements[] = ['id' => 'veteran', 'name' => '老手', 'desc' => '遊玩時間: ' . Plugin::format_playtime($pt), 'tier' => 'gold'];
+        elseif ($pt >= 36000)
+            $achievements[] = ['id' => 'veteran', 'name' => '老手', 'desc' => '遊玩時間: ' . Plugin::format_playtime($pt), 'tier' => 'silver'];
+        elseif ($pt >= 18000)
+            $achievements[] = ['id' => 'veteran', 'name' => '老手', 'desc' => '遊玩時間: ' . Plugin::format_playtime($pt), 'tier' => 'bronze'];
+
+        // 神槍手（命中率，需 shots_fired >= 500）
+        if ($fired >= 500) {
+            if ($acc >= 50)
+                $achievements[] = ['id' => 'dead_eye', 'name' => '神槍手', 'desc' => "命中率: {$acc}%", 'tier' => 'gold'];
+            elseif ($acc >= 40)
+                $achievements[] = ['id' => 'dead_eye', 'name' => '神槍手', 'desc' => "命中率: {$acc}%", 'tier' => 'silver'];
+            elseif ($acc >= 30)
+                $achievements[] = ['id' => 'dead_eye', 'name' => '神槍手', 'desc' => "命中率: {$acc}%", 'tier' => 'bronze'];
+        }
+
+        // 特殊成就（一次性解鎖，無階級）
+        // 友善隊友：超過5小時但從未造成友傷
+        if ((int)$player->friendly_fire_dealt === 0 && $pt >= 18000)
+            $achievements[] = ['id' => 'team_player', 'name' => '友善隊友', 'desc' => '遊玩超過5小時且從未造成友傷', 'tier' => 'special'];
+
+        // 彈藥庫：射擊超過10萬發
+        if ($fired >= 100000)
+            $achievements[] = ['id' => 'bullet_hose', 'name' => '彈藥庫', 'desc' => '累計射擊 ' . number_format($fired) . ' 發子彈', 'tier' => 'special'];
+
+        // 不死鳥：從未死亡且擊殺數 >= 100
+        if ((int)$player->deaths === 0 && $total_kills >= 100)
+            $achievements[] = ['id' => 'immortal', 'name' => '不死鳥', 'desc' => '從未死亡 (擊殺 ≥ 100)', 'tier' => 'special'];
+
+        // 急救大師：治療量超過10000
+        if ((int)$player->health_restored >= 10000)
+            $achievements[] = ['id' => 'heal_master', 'name' => '急救大師', 'desc' => '累計恢復血量 ' . number_format((int)$player->health_restored), 'tier' => 'special'];
+
+        return $achievements;
     }
 
     /**

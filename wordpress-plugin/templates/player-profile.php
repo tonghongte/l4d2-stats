@@ -120,6 +120,23 @@
         </div>
     </div>
 
+    <!-- 個人成就 -->
+    <?php if (!empty($achievements)): ?>
+    <h3 class="l4d2-section-title">個人成就</h3>
+    <div class="l4d2-achievements-grid">
+        <?php
+        $tier_labels = ['gold' => '金', 'silver' => '銀', 'bronze' => '銅', 'special' => '特殊'];
+        foreach ($achievements as $ach): ?>
+        <div class="l4d2-achievement-card l4d2-ach-<?php echo esc_attr($ach['tier']); ?>"
+             title="<?php echo esc_attr($ach['desc']); ?>">
+            <div class="l4d2-ach-tier-badge"><?php echo esc_html($tier_labels[$ach['tier']] ?? ''); ?></div>
+            <div class="l4d2-ach-name"><?php echo esc_html($ach['name']); ?></div>
+            <div class="l4d2-ach-desc"><?php echo esc_html($ach['desc']); ?></div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+
     <!-- 武器統計 -->
     <?php if (!empty($weapons)): ?>
     <h3 class="l4d2-section-title">常用武器</h3>
