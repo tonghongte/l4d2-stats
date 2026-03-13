@@ -216,7 +216,38 @@ cd <L4D2伺服器路徑>/left4dead2/addons/sourcemod/scripting
    ```
    應該能看到 `L4D2 Player Stats` 在清單中。
 
-### 2.4 技巧追蹤（選用）
+### 2.4 地圖名稱設定檔（選用，強烈建議）
+
+插件從 SourceMod 的 `configs/MapChanger.l4d2.txt` 讀取地圖中文名稱、戰役名稱與終章標記。這個檔案由 **L4D2 Map Changer**（作者：Silvers）提供。
+
+若伺服器已安裝 Map Changer，此檔案通常已存在，無需額外設定。
+
+**若未安裝 Map Changer** 或設定檔不存在：
+- 地圖名稱顯示為原始代碼（如 `c1m1_hotel`）
+- 戰役名稱無法自動識別，所有地圖歸為「自訂地圖」
+- `is_finale` 欄位無法自動判斷（需依賴此檔案）
+
+設定檔格式（KeyValues，`"campaigns"` 為根節點）：
+```
+"campaigns"
+{
+    "Dead Center"
+    {
+        "coop"
+        {
+            "1" { "Map" "c1m1_hotel"      "DisplayName" "Hotel"          "IsFinale" "0" }
+            "2" { "Map" "c1m2_motel"      "DisplayName" "Motel"          "IsFinale" "0" }
+            "3" { "Map" "c1m3_mall"       "DisplayName" "Mall Atrium"    "IsFinale" "0" }
+            "4" { "Map" "c1m4_atrium"     "DisplayName" "The Atrium"     "IsFinale" "1" }
+        }
+    }
+    // ... 其他戰役
+}
+```
+
+> 官方 14 個戰役的地圖資料已預先內建在 `seed_maps.sql` 中，資料庫層面不受影響。設定檔主要影響 SourceMod 插件在記錄場次時的名稱對照。
+
+### 2.5 技巧追蹤（選用）
 
 如需追蹤 Skeet、Crown、Level 等技巧事件，需額外安裝 **l4d2_skill_detect** 插件：
 
@@ -226,7 +257,7 @@ cd <L4D2伺服器路徑>/left4dead2/addons/sourcemod/scripting
 
 > 未安裝 l4d2_skill_detect 時，插件仍可正常運作，技巧欄位維持 0，不影響其他功能。
 
-### 2.5 插件設定 (可選)
+### 2.6 插件設定 (可選)
 
 插件首次載入後會自動產生設定檔：
 ```
