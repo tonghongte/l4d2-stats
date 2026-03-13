@@ -126,7 +126,8 @@
                 </div>
                 <!-- 中文頭銜徽章 -->
                 <div class="l4d2-mc-role-badge"
-                     style="color:<?php echo esc_attr($rc); ?>;border-color:<?php echo esc_attr($rc); ?>;">
+                     style="color:<?php echo esc_attr($rc); ?>;border-color:<?php echo esc_attr($rc); ?>;"
+                     title="<?php echo esc_attr($card['role']['desc']); ?>">
                     <?php echo esc_html($card['role']['name']); ?>
                 </div>
             </div>
