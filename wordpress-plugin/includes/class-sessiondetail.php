@@ -90,6 +90,13 @@ class SessionDetail {
                 SUM(COALESCE(sps.shots_hit, 0)) AS shots_hit,
                 SUM(COALESCE(sps.melee_swings, 0)) AS melee_swings,
                 SUM(COALESCE(sps.melee_hits, 0)) AS melee_hits,
+                SUM(COALESCE(sps.skeets, 0))      AS skeets,
+                SUM(COALESCE(sps.crowns, 0))      AS crowns,
+                SUM(COALESCE(sps.levels, 0))      AS levels,
+                SUM(COALESCE(sps.deadstops, 0))   AS deadstops,
+                SUM(COALESCE(sps.rock_skeets, 0)) AS rock_skeets,
+                SUM(COALESCE(sps.tongue_cuts, 0)) AS tongue_cuts,
+                SUM(COALESCE(sps.boomer_pops, 0)) AS boomer_pops,
                 (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
                 CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
                      THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
@@ -197,6 +204,14 @@ class SessionDetail {
         $spotlights = [];
         if ($has_stats && count($players) > 1) {
             $spotlights = self::compute_spotlights($players, $avatars);
+        }
+
+        // CS2 風格玩家卡片
+        $player_cards = [];
+        $funny_line   = '';
+        if ($has_stats && !empty($players)) {
+            $player_cards = self::compute_player_cards($players, $avatars);
+            $funny_line   = self::compute_funny_line($players);
         }
 
         // 按 map_code 分組（保留首次出現順序）
@@ -342,6 +357,13 @@ class SessionDetail {
                 SUM(COALESCE(sps.shots_hit, 0)) AS shots_hit,
                 SUM(COALESCE(sps.melee_swings, 0)) AS melee_swings,
                 SUM(COALESCE(sps.melee_hits, 0)) AS melee_hits,
+                SUM(COALESCE(sps.skeets, 0))      AS skeets,
+                SUM(COALESCE(sps.crowns, 0))      AS crowns,
+                SUM(COALESCE(sps.levels, 0))      AS levels,
+                SUM(COALESCE(sps.deadstops, 0))   AS deadstops,
+                SUM(COALESCE(sps.rock_skeets, 0)) AS rock_skeets,
+                SUM(COALESCE(sps.tongue_cuts, 0)) AS tongue_cuts,
+                SUM(COALESCE(sps.boomer_pops, 0)) AS boomer_pops,
                 (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
                 CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
                      THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
@@ -491,6 +513,207 @@ class SessionDetail {
             $push('隊友之殤', $mx_ff, number_format((int)$mx_ff->friendly_fire_damage), 'darkred');
 
         return $spots;
+    }
+
+    /**
+     * CS2 風格玩家戰績卡片
+     * 為每位玩家分配一個唯一頭銜，回傳卡片資料陣列
+     */
+    public static function compute_player_cards(array $players, array $avatars): array {
+        if (empty($players)) return [];
+
+        // 頭銜定義（依優先順序排列）
+        $role_defs = [
+            ['id'=>'kills',    'stat'=>'total_kills',         'name'=>'殲滅者',   'en'=>'The Exterminator', 'color'=>'#ef5350', 'desc'=>'全場擊殺最高'],
+            ['id'=>'damage',   'stat'=>'damage_dealt',         'name'=>'破壞之神', 'en'=>'The Demolisher',   'color'=>'#ff7043', 'desc'=>'全場傷害輸出最高'],
+            ['id'=>'headshot', 'stat'=>'headshots',            'name'=>'爆頭獵人', 'en'=>'The Headhunter',   'color'=>'#ab47bc', 'desc'=>'全場爆頭數最高'],
+            ['id'=>'si',       'stat'=>'kills_si',             'name'=>'特感剋星', 'en'=>'The SI Slayer',    'color'=>'#42a5f5', 'desc'=>'特感擊殺最多'],
+            ['id'=>'accuracy', 'stat'=>'accuracy',             'name'=>'神射手',   'en'=>'The Marksman',     'color'=>'#ffca28', 'desc'=>'命中率最高（需≥100發）'],
+            ['id'=>'revives',  'stat'=>'revives_given',        'name'=>'救命稻草', 'en'=>'The Lifeline',     'color'=>'#26c6da', 'desc'=>'救援隊友次數最多'],
+            ['id'=>'heals',    'stat'=>'heals_given',          'name'=>'移動藥局', 'en'=>'The Pharmacy',     'color'=>'#66bb6a', 'desc'=>'治療隊友次數最多'],
+            ['id'=>'taken',    'stat'=>'damage_taken',         'name'=>'人形坦克', 'en'=>'The Meatshield',   'color'=>'#78909c', 'desc'=>'承受傷害最多'],
+            ['id'=>'deaths',   'stat'=>'deaths',               'name'=>'替死鬼',   'en'=>'The Martyr',       'color'=>'#607d8b', 'desc'=>'死亡次數最多'],
+            ['id'=>'ff',       'stat'=>'friendly_fire_damage', 'name'=>'友傷製造',   'en'=>'The Team Hazard',    'color'=>'#c62828', 'desc'=>'造成友傷傷害最高'],
+            // 技巧頭銜（需 ≥1 次才可獲得）
+            ['id'=>'skeet',      'stat'=>'skeets',      'name'=>'空中截擊手', 'en'=>'The Skeet King',    'color'=>'#00e5ff', 'desc'=>'本局 Skeet 次數最多',      'min_val'=>1],
+            ['id'=>'crown',      'stat'=>'crowns',      'name'=>'女王剋星',   'en'=>'The Crown Queen',   'color'=>'#e91e63', 'desc'=>'本局 Crown 次數最多',      'min_val'=>1],
+            ['id'=>'level',      'stat'=>'levels',      'name'=>'衝鋒拆解',   'en'=>'The Leveler',       'color'=>'#ff6d00', 'desc'=>'本局 Level 次數最多',      'min_val'=>1],
+            ['id'=>'deadstop',   'stat'=>'deadstops',   'name'=>'反射之神',   'en'=>'The Reflex God',    'color'=>'#76ff03', 'desc'=>'本局 Deadstop 次數最多',   'min_val'=>1],
+            ['id'=>'rock_skeet', 'stat'=>'rock_skeets', 'name'=>'岩石毀滅',   'en'=>'The Rock Crusher',  'color'=>'#ffd740', 'desc'=>'本局 Rock Skeet 次數最多', 'min_val'=>1],
+            ['id'=>'tongue_cut', 'stat'=>'tongue_cuts', 'name'=>'切舌救主',   'en'=>'The Tongue Cutter', 'color'=>'#69f0ae', 'desc'=>'本局切舌解救次數最多',     'min_val'=>1],
+            ['id'=>'boomer_pop', 'stat'=>'boomer_pops', 'name'=>'炸彈終結',   'en'=>'The Boomer Buster', 'color'=>'#ffab40', 'desc'=>'本局 Boomer Pop 次數最多', 'min_val'=>1],
+        ];
+
+        // 貪心分配：每個頭銜只給最符合的玩家（且每人只有一個頭銜）
+        $assigned = []; // steam_id => ['role' => ..., 'val' => float]
+        $taken    = []; // role_id => true
+
+        foreach ($role_defs as $role) {
+            if (count($assigned) >= count($players)) break;
+            $best = null; $best_val = -1;
+            foreach ($players as $p) {
+                if (isset($assigned[$p->steam_id])) continue;
+                if ($role['id'] === 'accuracy' && (int)$p->shots_fired < 100) continue;
+                $val = (float)($p->{$role['stat']} ?? 0);
+                if (isset($role['min_val']) && $val < $role['min_val']) continue;
+                if ($best === null || $val > $best_val) { $best_val = $val; $best = $p; }
+            }
+            if ($best !== null && !isset($taken[$role['id']])) {
+                $assigned[$best->steam_id] = ['role' => $role, 'val' => $best_val];
+                $taken[$role['id']] = true;
+            }
+        }
+
+        // 未被分配到的玩家（罕見）給第一個還未被用的頭銜
+        foreach ($players as $p) {
+            if (!isset($assigned[$p->steam_id])) {
+                foreach ($role_defs as $role) {
+                    if (!isset($taken[$role['id']])) {
+                        $assigned[$p->steam_id] = ['role' => $role, 'val' => 0];
+                        $taken[$role['id']] = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 組建卡片
+        $used_hl = [];
+        $cards   = [];
+        foreach ($players as $p) {
+            $role_info  = $assigned[$p->steam_id] ?? ['role' => $role_defs[0], 'val' => 0];
+            $highlight  = self::pick_unique_highlight($p, $used_hl);
+            $used_hl[]  = $highlight['type'];
+            $cards[] = [
+                'player'    => $p,
+                'avatar'    => $avatars[$p->steam_id_64] ?? Plugin::DEFAULT_AVATAR,
+                'score'     => (int)$p->total_kills,
+                'role'      => $role_info['role'],
+                'highlight' => $highlight,
+            ];
+        }
+        return $cards;
+    }
+
+    /**
+     * 為單一玩家挑選一項本局亮點／失誤，確保與已使用類型不重複
+     */
+    private static function pick_unique_highlight($p, array $used): array {
+        $acc      = (float)$p->accuracy;
+        $kills    = (int)$p->total_kills;
+        $ff       = (int)$p->friendly_fire_damage;
+        $deaths   = (int)$p->deaths;
+        $incaps   = (int)$p->incaps;
+        $revives  = (int)$p->revives_given;
+        $headshots= (int)$p->headshots;
+        $damage   = (int)$p->damage_dealt;
+        $shots    = (int)$p->shots_fired;
+        $hs_rate  = $kills > 0 ? round($headshots / $kills * 100, 1) : 0;
+        $skeets    = (int)($p->skeets      ?? 0);
+        $crowns    = (int)($p->crowns      ?? 0);
+        $levels    = (int)($p->levels      ?? 0);
+        $deadstops = (int)($p->deadstops   ?? 0);
+        $rock_skts = (int)($p->rock_skeets ?? 0);
+        $tongue    = (int)($p->tongue_cuts ?? 0);
+        $boomer    = (int)($p->boomer_pops ?? 0);
+
+        $candidates = [];
+
+        // 正面亮點（好的事蹟）
+        if ($deaths === 0 && $incaps === 0)
+            $candidates[] = ['type'=>'zero_dmg',   'text'=>'本局全程零倒地零死亡，無懈可擊', 'good'=>true];
+        if ($deaths === 0 && $incaps > 0)
+            $candidates[] = ['type'=>'no_death',   'text'=>"倒地 {$incaps} 次卻從未真正死亡，不死之軀", 'good'=>true];
+        if ($acc >= 50 && $shots >= 100)
+            $candidates[] = ['type'=>'high_acc',   'text'=>sprintf('命中率 %.0f%%，每顆子彈都物盡其用', $acc), 'good'=>true];
+        if ($hs_rate >= 60 && $headshots >= 15)
+            $candidates[] = ['type'=>'hs_king',    'text'=>sprintf('爆頭率高達 %.0f%%，專攻弱點', $hs_rate), 'good'=>true];
+        if ($revives >= 5)
+            $candidates[] = ['type'=>'savior',     'text'=>"救援隊友 {$revives} 次，全場 MVP 非他莫屬", 'good'=>true];
+        if ((int)$p->kills_tank >= 2)
+            $candidates[] = ['type'=>'tank_kill',  'text'=>'協助擊殺 Tank ' . (int)$p->kills_tank . ' 次，坦克終結者', 'good'=>true];
+        if ((int)$p->kills_witch >= 3)
+            $candidates[] = ['type'=>'witch_kill', 'text'=>'獵殺 Witch ' . (int)$p->kills_witch . ' 次，勇者無畏', 'good'=>true];
+        if ($damage >= 50000)
+            $candidates[] = ['type'=>'big_dmg',    'text'=>'本局輸出 ' . number_format($damage) . ' 傷害，破壞力驚人', 'good'=>true];
+        if ((int)$p->defibs_used >= 2)
+            $candidates[] = ['type'=>'defib',      'text'=>'使用電擊器 ' . (int)$p->defibs_used . ' 次，起死回生大師', 'good'=>true];
+
+        // 技巧正面亮點
+        if ($skeets >= 3)
+            $candidates[] = ['type'=>'skeet',      'text'=>"本局 Skeet 了 {$skeets} 次，Hunter 見到他就想回老家", 'good'=>true];
+        if ($crowns >= 2)
+            $candidates[] = ['type'=>'crown',      'text'=>"一槍爆頭女巫 {$crowns} 次，她現在估計有創傷後壓力症候群", 'good'=>true];
+        if ($levels >= 3)
+            $candidates[] = ['type'=>'level',      'text'=>"平壓 Charger {$levels} 次，衝刺對他來說毫無意義", 'good'=>true];
+        if ($deadstops >= 3)
+            $candidates[] = ['type'=>'deadstop',   'text'=>"推擋 Hunter 撲擊 {$deadstops} 次，反應速度快到令人懷疑外掛", 'good'=>true];
+        if ($rock_skts >= 2)
+            $candidates[] = ['type'=>'rock_skeet', 'text'=>"打落 Tank 石頭 {$rock_skts} 次，Tank 表示：投什麼都沒用", 'good'=>true];
+        if ($tongue >= 5)
+            $candidates[] = ['type'=>'tongue_cut', 'text'=>"切舌／自救 {$tongue} 次，Smoker 已放棄對他出招", 'good'=>true];
+        if ($boomer >= 4)
+            $candidates[] = ['type'=>'boomer_pop', 'text'=>"推爆殭屍炸彈 {$boomer} 次，Boomer 現在聞到他的腳步聲就膽戰心驚", 'good'=>true];
+
+        // 技巧負面吐槽（技巧全部為零）
+        if ($skeets === 0 && $crowns === 0 && $levels === 0 && $deadstops === 0 && $kills > 5)
+            $candidates[] = ['type'=>'no_skill',   'text'=>'擊殺雖多，但整局零技巧，全靠亂槍打鳥', 'good'=>false];
+
+        // 負面亮點（失誤）
+        if ($ff >= 500)
+            $candidates[] = ['type'=>'ff_blunder', 'text'=>'對隊友造成 ' . number_format($ff) . ' 點傷害，隊友已懷疑人生', 'good'=>false];
+        if ($deaths >= 3)
+            $candidates[] = ['type'=>'death_blunder','text'=>"本局死了 {$deaths} 次，隊友的救援手腕快磨出繭", 'good'=>false];
+        if ($incaps >= 5)
+            $candidates[] = ['type'=>'incap_blunder','text'=>"倒地 {$incaps} 次，是隊伍指定倒地員", 'good'=>false];
+        if ($acc < 20 && $shots >= 200)
+            $candidates[] = ['type'=>'bad_acc',    'text'=>sprintf('命中率僅 %.0f%%，建議換用霰彈槍', $acc), 'good'=>false];
+
+        // Fallback
+        $candidates[] = ['type'=>'generic', 'text'=>"{$kills} 擊殺 / " . number_format($damage) . ' 傷害', 'good'=>true];
+
+        foreach ($candidates as $c) {
+            if (!in_array($c['type'], $used)) return $c;
+        }
+        return $candidates[count($candidates) - 1];
+    }
+
+    /**
+     * 產生一句關於這局最值得吐槽的幽默評語
+     */
+    public static function compute_funny_line(array $players): string {
+        $ff_max = 0;    $ff_p    = null;
+        $death_max = 0; $death_p = null;
+        $incap_max = 0; $incap_p = null;
+        $worst_acc = 100; $worst_acc_p = null;
+        $top_kills = 0; $top_kills_p = null;
+        $total_kills = 0;
+
+        foreach ($players as $p) {
+            $total_kills += (int)$p->total_kills;
+            if ((int)$p->friendly_fire_damage > $ff_max)       { $ff_max    = (int)$p->friendly_fire_damage; $ff_p    = $p; }
+            if ((int)$p->deaths > $death_max)                  { $death_max = (int)$p->deaths;               $death_p = $p; }
+            if ((int)$p->incaps > $incap_max)                  { $incap_max = (int)$p->incaps;               $incap_p = $p; }
+            if ((int)$p->shots_fired >= 200 && (float)$p->accuracy < $worst_acc) {
+                $worst_acc = (float)$p->accuracy; $worst_acc_p = $p;
+            }
+            if ((int)$p->total_kills > $top_kills) { $top_kills = (int)$p->total_kills; $top_kills_p = $p; }
+        }
+
+        $lines = [];
+        if ($ff_p && $ff_max >= 300)
+            $lines[] = '🔥 ' . esc_html($ff_p->name) . ' 竟然對隊友打了 ' . number_format($ff_max) . ' 點傷害，下次記得分清楚誰是殭屍！';
+        if ($death_p && $death_max >= 4)
+            $lines[] = '💀 ' . esc_html($death_p->name) . " 這局死了 {$death_max} 次，隊友的救援手腕已磨出老繭。";
+        if ($worst_acc_p && $worst_acc < 20)
+            $lines[] = '🎯 ' . esc_html($worst_acc_p->name) . sprintf(' 命中率僅 %.0f%%，是在用槍給殭屍按摩嗎？', $worst_acc);
+        if ($incap_p && $incap_max >= 7)
+            $lines[] = '🏥 ' . esc_html($incap_p->name) . " 倒地了 {$incap_max} 次，隊友幾乎把扶人當做日常任務。";
+        if ($top_kills_p && $total_kills > 0 && $top_kills >= $total_kills * 0.6)
+            $lines[] = '🔫 ' . esc_html($top_kills_p->name) . ' 一人包辦了 ' . round($top_kills / $total_kills * 100) . '% 的擊殺，隊友紛紛轉職為啦啦隊。';
+
+        if (!empty($lines)) return $lines[0];
+        return '🧟 一場酣暢淋漓的戰鬥，感謝殭屍們的積極配合。';
     }
 
     /**

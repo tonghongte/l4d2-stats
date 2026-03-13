@@ -276,7 +276,7 @@ void FlushPlayerStats(int client)
         return;
 
     char query[MAX_QUERY_LENGTH];
-    FormatEx(query, sizeof(query), "UPDATE l4d2_player_stats SET kills_infected=kills_infected+%d, kills_si=kills_si+%d, kills_witch=kills_witch+%d, kills_tank=kills_tank+%d, headshots=headshots+%d, damage_dealt=damage_dealt+%d, damage_taken=damage_taken+%d, deaths=deaths+%d, incaps=incaps+%d, revives_given=revives_given+%d, revives_received=revives_received+%d, heals_given=heals_given+%d, heals_received=heals_received+%d, health_restored=health_restored+%d, pills_used=pills_used+%d, adrenaline_used=adrenaline_used+%d, defibs_used=defibs_used+%d, friendly_fire_dealt=friendly_fire_dealt+%d, friendly_fire_damage=friendly_fire_damage+%d, shots_fired=shots_fired+%d, shots_hit=shots_hit+%d, melee_swings=melee_swings+%d, melee_hits=melee_hits+%d, campaigns_completed=campaigns_completed+%d, maps_completed=maps_completed+%d WHERE player_id=%d",
+    FormatEx(query, sizeof(query), "UPDATE l4d2_player_stats SET kills_infected=kills_infected+%d, kills_si=kills_si+%d, kills_witch=kills_witch+%d, kills_tank=kills_tank+%d, headshots=headshots+%d, damage_dealt=damage_dealt+%d, damage_taken=damage_taken+%d, deaths=deaths+%d, incaps=incaps+%d, revives_given=revives_given+%d, revives_received=revives_received+%d, heals_given=heals_given+%d, heals_received=heals_received+%d, health_restored=health_restored+%d, pills_used=pills_used+%d, adrenaline_used=adrenaline_used+%d, defibs_used=defibs_used+%d, friendly_fire_dealt=friendly_fire_dealt+%d, friendly_fire_damage=friendly_fire_damage+%d, shots_fired=shots_fired+%d, shots_hit=shots_hit+%d, melee_swings=melee_swings+%d, melee_hits=melee_hits+%d, campaigns_completed=campaigns_completed+%d, maps_completed=maps_completed+%d, skeets=skeets+%d, crowns=crowns+%d, levels=levels+%d, deadstops=deadstops+%d, rock_skeets=rock_skeets+%d, tongue_cuts=tongue_cuts+%d, boomer_pops=boomer_pops+%d WHERE player_id=%d",
         stats.kills_infected, stats.kills_si, stats.kills_witch, stats.kills_tank,
         stats.headshots, stats.damage_dealt, stats.damage_taken,
         stats.deaths, stats.incaps,
@@ -287,6 +287,8 @@ void FlushPlayerStats(int client)
         stats.shots_fired, stats.shots_hit,
         stats.melee_swings, stats.melee_hits,
         stats.campaigns_completed, stats.maps_completed,
+        stats.skeets, stats.crowns, stats.levels, stats.deadstops,
+        stats.rock_skeets, stats.tongue_cuts, stats.boomer_pops,
         g_iPlayerDbId[client]);
 
     g_hDatabase.Query(OnGenericQuery, query);
@@ -295,7 +297,7 @@ void FlushPlayerStats(int client)
     if (g_bSessionActive && g_iSessionId > 0)
     {
         char sessionQuery[MAX_QUERY_LENGTH];
-        FormatEx(sessionQuery, sizeof(sessionQuery), "INSERT INTO l4d2_session_player_stats (session_id, player_id, kills_infected, kills_si, kills_witch, kills_tank, headshots, damage_dealt, damage_taken, deaths, incaps, revives_given, revives_received, heals_given, heals_received, health_restored, pills_used, adrenaline_used, defibs_used, friendly_fire_dealt, friendly_fire_damage, shots_fired, shots_hit, melee_swings, melee_hits) VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d) ON DUPLICATE KEY UPDATE kills_infected=kills_infected+VALUES(kills_infected), kills_si=kills_si+VALUES(kills_si), kills_witch=kills_witch+VALUES(kills_witch), kills_tank=kills_tank+VALUES(kills_tank), headshots=headshots+VALUES(headshots), damage_dealt=damage_dealt+VALUES(damage_dealt), damage_taken=damage_taken+VALUES(damage_taken), deaths=deaths+VALUES(deaths), incaps=incaps+VALUES(incaps), revives_given=revives_given+VALUES(revives_given), revives_received=revives_received+VALUES(revives_received), heals_given=heals_given+VALUES(heals_given), heals_received=heals_received+VALUES(heals_received), health_restored=health_restored+VALUES(health_restored), pills_used=pills_used+VALUES(pills_used), adrenaline_used=adrenaline_used+VALUES(adrenaline_used), defibs_used=defibs_used+VALUES(defibs_used), friendly_fire_dealt=friendly_fire_dealt+VALUES(friendly_fire_dealt), friendly_fire_damage=friendly_fire_damage+VALUES(friendly_fire_damage), shots_fired=shots_fired+VALUES(shots_fired), shots_hit=shots_hit+VALUES(shots_hit), melee_swings=melee_swings+VALUES(melee_swings), melee_hits=melee_hits+VALUES(melee_hits)",
+        FormatEx(sessionQuery, sizeof(sessionQuery), "INSERT INTO l4d2_session_player_stats (session_id, player_id, kills_infected, kills_si, kills_witch, kills_tank, headshots, damage_dealt, damage_taken, deaths, incaps, revives_given, revives_received, heals_given, heals_received, health_restored, pills_used, adrenaline_used, defibs_used, friendly_fire_dealt, friendly_fire_damage, shots_fired, shots_hit, melee_swings, melee_hits, skeets, crowns, levels, deadstops, rock_skeets, tongue_cuts, boomer_pops) VALUES (%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d) ON DUPLICATE KEY UPDATE kills_infected=kills_infected+VALUES(kills_infected), kills_si=kills_si+VALUES(kills_si), kills_witch=kills_witch+VALUES(kills_witch), kills_tank=kills_tank+VALUES(kills_tank), headshots=headshots+VALUES(headshots), damage_dealt=damage_dealt+VALUES(damage_dealt), damage_taken=damage_taken+VALUES(damage_taken), deaths=deaths+VALUES(deaths), incaps=incaps+VALUES(incaps), revives_given=revives_given+VALUES(revives_given), revives_received=revives_received+VALUES(revives_received), heals_given=heals_given+VALUES(heals_given), heals_received=heals_received+VALUES(heals_received), health_restored=health_restored+VALUES(health_restored), pills_used=pills_used+VALUES(pills_used), adrenaline_used=adrenaline_used+VALUES(adrenaline_used), defibs_used=defibs_used+VALUES(defibs_used), friendly_fire_dealt=friendly_fire_dealt+VALUES(friendly_fire_dealt), friendly_fire_damage=friendly_fire_damage+VALUES(friendly_fire_damage), shots_fired=shots_fired+VALUES(shots_fired), shots_hit=shots_hit+VALUES(shots_hit), melee_swings=melee_swings+VALUES(melee_swings), melee_hits=melee_hits+VALUES(melee_hits), skeets=skeets+VALUES(skeets), crowns=crowns+VALUES(crowns), levels=levels+VALUES(levels), deadstops=deadstops+VALUES(deadstops), rock_skeets=rock_skeets+VALUES(rock_skeets), tongue_cuts=tongue_cuts+VALUES(tongue_cuts), boomer_pops=boomer_pops+VALUES(boomer_pops)",
             g_iSessionId, g_iPlayerDbId[client],
             stats.kills_infected, stats.kills_si, stats.kills_witch, stats.kills_tank,
             stats.headshots, stats.damage_dealt, stats.damage_taken,
@@ -305,7 +307,9 @@ void FlushPlayerStats(int client)
             stats.pills_used, stats.adrenaline_used, stats.defibs_used,
             stats.ff_dealt, stats.ff_damage,
             stats.shots_fired, stats.shots_hit,
-            stats.melee_swings, stats.melee_hits);
+            stats.melee_swings, stats.melee_hits,
+            stats.skeets, stats.crowns, stats.levels, stats.deadstops,
+            stats.rock_skeets, stats.tongue_cuts, stats.boomer_pops);
 
         g_hDatabase.Query(OnGenericQuery, sessionQuery);
     }

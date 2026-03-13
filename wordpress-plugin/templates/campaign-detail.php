@@ -71,21 +71,77 @@
         </div>
     </div>
 
-    <!-- 玩家亮點卡片 -->
-    <?php if (!empty($spotlights)): ?>
-    <h3 class="l4d2-section-title">玩家亮點</h3>
-    <div class="l4d2-spotlights">
-        <?php foreach ($spotlights as $sp): ?>
-        <div class="l4d2-spotlight-card l4d2-sp-<?php echo esc_attr($sp['color']); ?>">
-            <div class="l4d2-sp-label"><?php echo esc_html($sp['label']); ?></div>
-            <div class="l4d2-sp-player">
-                <?php echo \L4D2Stats\Plugin::render_avatar($sp['avatar'], 'small'); ?>
-                <span><?php echo esc_html($sp['player']->name); ?></span>
+    <!-- CS2 風格玩家戰績卡片 -->
+    <?php if (!empty($player_cards)): ?>
+    <h3 class="l4d2-section-title">本局戰績</h3>
+    <?php
+    $player_url_base = \L4D2Stats\Plugin::get_page_url_by_shortcode('l4d2_player_stats');
+    ?>
+    <div class="l4d2-match-players">
+        <?php foreach ($player_cards as $card): ?>
+        <?php
+            $rc = $card['role']['color'];
+            $p  = $card['player'];
+        ?>
+        <div class="l4d2-match-player-col">
+            <div class="l4d2-match-card" style="--card-accent:<?php echo esc_attr($rc); ?>;">
+                <!-- 分數 -->
+                <div class="l4d2-mc-score"><?php echo (int)$card['score']; ?></div>
+                <!-- 頭像 -->
+                <div class="l4d2-mc-avatar-wrap">
+                    <?php echo \L4D2Stats\Plugin::render_avatar($card['avatar'], 'large'); ?>
+                </div>
+                <!-- 名稱 -->
+                <div class="l4d2-mc-name">
+                    <?php if ($player_url_base): ?>
+                    <a href="<?php echo esc_url(add_query_arg('steam_id', urlencode($p->steam_id), $player_url_base)); ?>"
+                       class="l4d2-mc-name-link"><?php echo esc_html($p->name); ?></a>
+                    <?php else: ?>
+                    <?php echo esc_html($p->name); ?>
+                    <?php endif; ?>
+                </div>
+                <!-- 英文頭銜（hover 顯示說明） -->
+                <div class="l4d2-mc-role-en"
+                     title="<?php echo esc_attr($card['role']['desc']); ?>">
+                    <?php echo esc_html($card['role']['en']); ?>
+                </div>
+                <!-- 數據格 -->
+                <div class="l4d2-mc-stats">
+                    <div class="l4d2-mc-stat">
+                        <span class="l4d2-mc-sv"><?php echo number_format((int)$p->total_kills); ?></span>
+                        <span class="l4d2-mc-sl">擊殺</span>
+                    </div>
+                    <div class="l4d2-mc-stat">
+                        <span class="l4d2-mc-sv"><?php echo number_format((int)$p->damage_dealt); ?></span>
+                        <span class="l4d2-mc-sl">傷害</span>
+                    </div>
+                    <div class="l4d2-mc-stat">
+                        <span class="l4d2-mc-sv"><?php echo $p->accuracy; ?>%</span>
+                        <span class="l4d2-mc-sl">命中率</span>
+                    </div>
+                    <div class="l4d2-mc-stat">
+                        <span class="l4d2-mc-sv"><?php echo (int)$p->deaths; ?> / <?php echo (int)$p->incaps; ?></span>
+                        <span class="l4d2-mc-sl">死 / 倒</span>
+                    </div>
+                </div>
+                <!-- 中文頭銜徽章 -->
+                <div class="l4d2-mc-role-badge"
+                     style="color:<?php echo esc_attr($rc); ?>;border-color:<?php echo esc_attr($rc); ?>;">
+                    <?php echo esc_html($card['role']['name']); ?>
+                </div>
             </div>
-            <div class="l4d2-sp-value"><?php echo esc_html($sp['value']); ?></div>
+            <!-- 本局一句亮點 / 失誤 -->
+            <div class="l4d2-mc-highlight <?php echo $card['highlight']['good'] ? 'l4d2-mc-hl-good' : 'l4d2-mc-hl-bad'; ?>">
+                <span class="l4d2-mc-hl-name"><?php echo esc_html($p->name); ?></span>
+                <?php echo esc_html($card['highlight']['text']); ?>
+            </div>
         </div>
         <?php endforeach; ?>
     </div>
+    <!-- 幽默一句話 -->
+    <?php if (!empty($funny_line)): ?>
+    <div class="l4d2-mc-funny"><?php echo wp_kses($funny_line, ['em'=>[], 'strong'=>[]]) ; ?></div>
+    <?php endif; ?>
     <?php endif; ?>
 
     <!-- 章節列表 -->

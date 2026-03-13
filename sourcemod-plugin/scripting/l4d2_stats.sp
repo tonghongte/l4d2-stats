@@ -32,7 +32,7 @@ public Plugin myinfo = {
 // ============================================================
 #define FLUSH_INTERVAL      120.0   // 每2分鐘寫入一次資料庫
 #define MAX_WEAPON_NAME     64
-#define MAX_QUERY_LENGTH    4096
+#define MAX_QUERY_LENGTH    8192
 #define TEAM_SURVIVOR       2
 #define TEAM_INFECTED       3
 
@@ -93,6 +93,14 @@ enum struct PlayerStatBuffer {
     int melee_hits;
     int campaigns_completed;
     int maps_completed;
+    // skill_detect stats
+    int skeets;
+    int crowns;
+    int levels;
+    int deadstops;
+    int rock_skeets;
+    int tongue_cuts;
+    int boomer_pops;
 }
 
 PlayerStatBuffer g_PlayerStats[MAXPLAYERS + 1];
@@ -128,6 +136,7 @@ StringMap g_MapIsFinale;       // map_name -> bool (true = 終章)
 #include "include/l4d2_stats_session.inc"
 #include "include/l4d2_stats_events.inc"
 #include "include/l4d2_stats_commands.inc"
+#include "include/l4d2_stats_skills.inc"
 
 // ============================================================
 // Plugin Lifecycle

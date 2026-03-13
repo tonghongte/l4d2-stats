@@ -1397,3 +1397,211 @@
 .l4d2-ach-special .l4d2-ach-name {
     color: #90caf9;
 }
+
+/* ============================================================
+   CS2-style Match Player Cards (Campaign Detail)
+   ============================================================ */
+
+/* Outer grid: 1..4 equal columns */
+.l4d2-match-players {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 8px;
+}
+
+/* Each column = card + highlight bubble */
+.l4d2-match-player-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* The card itself */
+.l4d2-match-card {
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid #2e2e3e;
+    border-top: 3px solid var(--card-accent, #ff4444);
+    border-radius: 10px;
+    padding: 14px 12px 16px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+    flex: 1;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.l4d2-match-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Score number (top-left, large) */
+.l4d2-mc-score {
+    position: absolute;
+    top: 11px;
+    left: 13px;
+    font-size: 30px;
+    font-weight: 900;
+    color: var(--card-accent, #ff4444);
+    line-height: 1;
+    opacity: 0.9;
+}
+
+/* Avatar circle */
+.l4d2-mc-avatar-wrap {
+    margin-top: 6px;
+}
+
+.l4d2-mc-avatar-wrap .l4d2-avatar {
+    width: 68px !important;
+    height: 68px !important;
+    border: 3px solid var(--card-accent, #ff4444);
+    box-shadow: 0 0 14px color-mix(in srgb, var(--card-accent, #ff4444) 40%, transparent);
+}
+
+/* Player name */
+.l4d2-mc-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.l4d2-mc-name-link {
+    color: #fff;
+    text-decoration: none;
+}
+
+.l4d2-mc-name-link:hover {
+    color: var(--card-accent, #ff6b6b);
+    text-decoration: underline;
+}
+
+/* English role subtitle */
+.l4d2-mc-role-en {
+    font-size: 11px;
+    font-style: italic;
+    color: var(--card-accent, #aaa);
+    opacity: 0.85;
+    cursor: default;
+}
+
+/* 2×2 stats grid */
+.l4d2-mc-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 8px;
+    width: 100%;
+    margin: 4px 0 2px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.l4d2-mc-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.l4d2-mc-sv {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e8e8e8;
+    line-height: 1;
+}
+
+.l4d2-mc-sl {
+    font-size: 9px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* Role badge at bottom */
+.l4d2-mc-role-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border: 1px solid;
+    border-radius: 12px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+/* Per-player highlight / blunder bubble */
+.l4d2-mc-highlight {
+    font-size: 12px;
+    line-height: 1.45;
+    padding: 8px 10px;
+    border-radius: 7px;
+    text-align: center;
+}
+
+.l4d2-mc-hl-good {
+    background: rgba(76, 175, 80, 0.08);
+    border: 1px solid rgba(76, 175, 80, 0.25);
+    color: #a5d6a7;
+}
+
+.l4d2-mc-hl-bad {
+    background: rgba(244, 67, 54, 0.08);
+    border: 1px solid rgba(244, 67, 54, 0.25);
+    color: #ef9a9a;
+}
+
+.l4d2-mc-hl-name {
+    font-weight: 700;
+    color: #ddd;
+    margin-right: 3px;
+}
+
+/* Funny one-liner below all cards */
+.l4d2-mc-funny {
+    text-align: center;
+    padding: 12px 20px;
+    background: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
+    margin-bottom: 24px;
+}
+
+/* Responsive: stack columns on narrow screens */
+@media (max-width: 600px) {
+    .l4d2-match-players {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .l4d2-mc-score {
+        font-size: 22px;
+    }
+
+    .l4d2-mc-avatar-wrap .l4d2-avatar {
+        width: 52px !important;
+        height: 52px !important;
+    }
+
+    .l4d2-mc-sv {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .l4d2-match-players {
+        grid-template-columns: 1fr 1fr;
+    }
+}

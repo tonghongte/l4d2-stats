@@ -128,7 +128,7 @@ class Player {
         }
 
         // 計算個人成就
-        $achievements = self::compute_player_achievements($player, $maps);
+        $achievements = self::compute_player_achievements($player, $maps, $weapons);
 
         ob_start();
         include L4D2_STATS_DIR . 'templates/player-profile.php';
@@ -139,7 +139,7 @@ class Player {
      * 計算玩家個人成就陣列
      * 每項成就包含: id, name, desc, tier (gold/silver/bronze/special)
      */
-    private static function compute_player_achievements($player, array $maps): array {
+    private static function compute_player_achievements($player, array $maps, array $weapons = []): array {
         $achievements = [];
         $total_kills  = (int)$player->kills_infected + (int)$player->kills_si;
         $map_count    = count($maps);
@@ -149,17 +149,31 @@ class Player {
 
         // 階梯式成就：[id, 顯示名稱, 說明前綴, [金門檻, 銀門檻, 銅門檻], 實際數值]
         $tiered = [
-            ['kill_machine',    '殺戮機器', '總擊殺',       [10000, 5000, 1000],  $total_kills],
-            ['hs_king',         '爆頭王',   '爆頭數',       [3000, 1000, 300],    (int)$player->headshots],
-            ['si_hunter',       '特感獵人', '特感擊殺',     [500, 200, 50],       (int)$player->kills_si],
-            ['tank_slayer',     '坦克剋星', 'Tank 擊殺',    [100, 50, 10],        (int)$player->kills_tank],
-            ['witch_slayer',    '女巫剋星', 'Witch 擊殺',   [50, 20, 5],          (int)$player->kills_witch],
-            ['rescue_hero',     '救援英雄', '救援次數',     [200, 100, 30],       (int)$player->revives_given],
-            ['medic',           '醫療兵',   '治療次數',     [100, 50, 20],        (int)$player->heals_given],
-            ['campaign_master', '戰役達人', '戰役通關',     [50, 20, 5],          (int)$player->campaigns_completed],
-            ['melee_master',    '格鬥家',   '近身命中',     [500, 200, 50],       (int)$player->melee_hits],
-            ['defibrillator',   '電擊重生', '電擊器使用',   [50, 20, 5],          (int)$player->defibs_used],
-            ['explorer',        '地圖探索家','遊玩地圖種類', [50, 30, 10],         $map_count],
+            ['kill_machine',    '殺戮機器', '總擊殺',       [10000, 5000, 1000],      $total_kills],
+            ['hs_king',         '爆頭王',   '爆頭數',       [3000, 1000, 300],        (int)$player->headshots],
+            ['si_hunter',       '特感獵人', '特感擊殺',     [500, 200, 50],           (int)$player->kills_si],
+            ['tank_slayer',     '坦克剋星', 'Tank 擊殺',    [100, 50, 10],            (int)$player->kills_tank],
+            ['witch_slayer',    '女巫剋星', 'Witch 擊殺',   [50, 20, 5],              (int)$player->kills_witch],
+            ['rescue_hero',     '救援英雄', '救援次數',     [200, 100, 30],           (int)$player->revives_given],
+            ['medic',           '醫療兵',   '治療次數',     [100, 50, 20],            (int)$player->heals_given],
+            ['campaign_master', '戰役達人', '戰役通關',     [50, 20, 5],              (int)$player->campaigns_completed],
+            ['melee_master',    '格鬥家',   '近身命中',     [500, 200, 50],           (int)$player->melee_hits],
+            ['defibrillator',   '電擊重生', '電擊器使用',   [50, 20, 5],              (int)$player->defibs_used],
+            ['explorer',        '地圖探索家','遊玩地圖種類', [50, 30, 10],             $map_count],
+            ['damage_dealer',   '傷害製造者','對感染者總傷害',[2000000, 500000, 100000], (int)$player->damage_dealt],
+            ['iron_man',        '打不死',   '承受總傷害',   [100000, 50000, 10000],   (int)$player->damage_taken],
+            ['incap_pro',       '倒地常客', '倒地次數',     [200, 100, 30],           (int)$player->incaps],
+            ['pill_junkie',     '藥罐子',   '止痛藥使用',   [200, 100, 30],           (int)$player->pills_used],
+            ['map_conqueror',   '地圖征服者','地圖通關次數', [200, 100, 30],           (int)$player->maps_completed],
+            ['rescued',         '被救達人', '被救次數',     [100, 50, 20],            (int)$player->revives_received],
+            // 技巧類成就（來自 skill_detect）
+            ['skeet',       '空中截擊', 'Skeet 次數',     [50, 20, 5],  (int)($player->skeets      ?? 0)],
+            ['crown',       '女王殺手', 'Crown 次數',     [30, 10, 3],  (int)($player->crowns      ?? 0)],
+            ['level',       '地平壓制', 'Level 次數',     [50, 20, 5],  (int)($player->levels      ?? 0)],
+            ['deadstop',    '反應之神', 'Deadstop 次數',  [50, 20, 5],  (int)($player->deadstops   ?? 0)],
+            ['rock_skeet',  '岩石粉碎', 'Rock Skeet 次數',[20, 10, 3],  (int)($player->rock_skeets ?? 0)],
+            ['tongue_cut',  '切舌俠',   '切舌/自救次數',  [100, 50, 15],(int)($player->tongue_cuts ?? 0)],
+            ['boomer_pop',  '炸彈拆除', 'Boomer Pop 次數',[50, 20, 5],  (int)($player->boomer_pops ?? 0)],
         ];
 
         foreach ($tiered as [$id, $name, $desc_base, [$gold, $silver, $bronze], $val]) {
@@ -205,6 +219,36 @@ class Player {
         // 急救大師：治療量超過10000
         if ((int)$player->health_restored >= 10000)
             $achievements[] = ['id' => 'heal_master', 'name' => '急救大師', 'desc' => '累計恢復血量 ' . number_format((int)$player->health_restored), 'tier' => 'special'];
+
+        // 鋼鐵意志：倒地 >= 20 次但從未真正死亡
+        if ((int)$player->incaps >= 20 && (int)$player->deaths === 0)
+            $achievements[] = ['id' => 'iron_will', 'name' => '鋼鐵意志', 'desc' => '倒地 ' . (int)$player->incaps . ' 次卻從未真正死亡', 'tier' => 'special'];
+
+        // 吃藥上癮：止痛藥 + 腎上腺素合計使用 >= 150
+        $total_stims = (int)$player->pills_used + (int)$player->adrenaline_used;
+        if ($total_stims >= 150)
+            $achievements[] = ['id' => 'drug_addict', 'name' => '吃藥上癮', 'desc' => '止痛藥+腎上腺素合計使用 ' . $total_stims . ' 次', 'tier' => 'special'];
+
+        // 人形坦克：承受傷害 >= 200000
+        if ((int)$player->damage_taken >= 200000)
+            $achievements[] = ['id' => 'damage_sponge', 'name' => '人形坦克', 'desc' => '累計承受傷害 ' . number_format((int)$player->damage_taken), 'tier' => 'special'];
+
+        // 武器收藏家：使用過 6 種以上不同類型武器
+        if (!empty($weapons)) {
+            $weapon_types = array_unique(array_column($weapons, 'weapon_type'));
+            $type_count = count($weapon_types);
+            if ($type_count >= 6)
+                $achievements[] = ['id' => 'weapon_collector', 'name' => '武器收藏家', 'desc' => '使用過 ' . $type_count . ' 種不同類型武器', 'tier' => 'special'];
+        }
+
+        // 百發百中：射擊 >= 1000 發且命中率 >= 60%
+        if ($fired >= 1000 && $acc >= 60)
+            $achievements[] = ['id' => 'dead_shot', 'name' => '百發百中', 'desc' => "射擊 {$fired} 發，命中率 {$acc}%", 'tier' => 'special'];
+
+        // 戰地護士：救援 + 治療合計 >= 500 且從未友傷
+        $support_total = (int)$player->revives_given + (int)$player->heals_given;
+        if ($support_total >= 500 && (int)$player->friendly_fire_dealt === 0)
+            $achievements[] = ['id' => 'field_medic', 'name' => '戰地護士', 'desc' => '救援+治療合計 ' . $support_total . ' 次且從未友傷', 'tier' => 'special'];
 
         return $achievements;
     }
