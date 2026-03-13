@@ -12,7 +12,8 @@ Left 4 Dead 2 玩家戰績追蹤系統。透過 SourceMod 插件自動記錄遊�
 - **地圖統計** — 戰役列表概覽（附官方海報縮圖），遊玩場次以獨立戰役場次計算；點進查看戰役所有章節地圖（含未遊玩章節）的遊玩次數、通關率、獨立玩家數
 - **戰役場次記錄** — 連續遊玩的章節地圖自動歸組為一場戰役，顯示戰役名稱、章節數、難度、時長、通關狀態；進行中場次即時顯示「遊玩中」狀態
 - **戰役詳細** — 點進戰役查看章節地圖列表（以地圖聚合，含重試次數、通關難度），全戰役聚合數據（擊殺/傷害/武器分布圖表）；支援多種通關成就徽章（依序通關/零重試/速通/專家通關/零死亡/零友傷）
-- **玩家亮點卡片** — 戰役詳細頁面自動顯示本場最突出玩家，涵蓋最多擊殺、最高傷害、最多爆頭、特感獵人、神槍手、救援英雄、醫療兵等 10 種類別
+- **CS2 風格玩家卡片** — 戰役詳細頁面仿 CS2 對局結算畫面，顯示最多 4 張玩家卡片；每人獲得唯一頭銜（17 種：10 種基本 + 7 種技巧），卡片下方附個人亮點或吐槽評語，底部一句全場幽默總結
+- **技巧追蹤（l4d2_skill_detect 整合）** — 追蹤 Skeet、Crown、Level、Deadstop、Rock Skeet、Tongue Cut、Boomer Pop 共 7 種技巧事件；計入個人成就、場次玩家頭銜、亮點評語（需伺服器另裝 l4d2_skill_detect 插件）
 - **章節地圖詳情** — 點進個別章節查看該章節的重試紀錄（每次嘗試的時長/難度/結果）、跨所有嘗試的玩家表現與武器使用統計
 - **單場次詳細** — 查看單張地圖場次的玩家表現、武器使用、道具使用、友軍傷害，搭配互動圖表
 - **玩家搜尋** — 即時搜尋玩家名稱或 Steam ID，結果附頭像
@@ -42,12 +43,14 @@ l4d2-stats/
 │   │       ├── l4d2_stats_events.inc   # 遊戲事件處理
 │   │       ├── l4d2_stats_commands.inc # 遊戲內指令
 │   │       ├── l4d2_stats_session.inc  # 場次管理
-│   │       └── l4d2_stats_util.inc     # 工具函式
+│   │       ├── l4d2_stats_util.inc     # 工具函式
+│   │       └── l4d2_stats_skills.inc   # 技巧事件整合（l4d2_skill_detect）
 │   ├── configs/
 │   │   └── databases.cfg.example   # 資料庫連線設定範例
 │   └── sql/
 │       ├── schema.sql              # 資料表建立腳本（含場次數據表）
 │       ├── migration_session_stats.sql # 場次數據表遷移腳本
+│       ├── migration_skill_stats.sql   # 技巧欄位遷移腳本
 │       ├── seed_weapons.sql        # 武器預填資料
 │       └── seed_maps.sql           # 地圖預填資料
 │
@@ -213,7 +216,17 @@ cd <L4D2伺服器路徑>/left4dead2/addons/sourcemod/scripting
    ```
    應該能看到 `L4D2 Player Stats` 在清單中。
 
-### 2.4 插件設定 (可選)
+### 2.4 技巧追蹤（選用）
+
+如需追蹤 Skeet、Crown、Level 等技巧事件，需額外安裝 **l4d2_skill_detect** 插件：
+
+1. 從 [Tabun/skill_detect](https://github.com/Tabun/skill_detect) 下載並安裝 `l4d2_skill_detect.smx`
+2. 在 phpMyAdmin 執行 `sourcemod-plugin/sql/migration_skill_stats.sql`，新增技巧統計欄位
+3. 重新編譯 `l4d2_stats.sp`（確保 `include/l4d2_stats_skills.inc` 一同包含在內）
+
+> 未安裝 l4d2_skill_detect 時，插件仍可正常運作，技巧欄位維持 0，不影響其他功能。
+
+### 2.5 插件設定 (可選)
 
 插件首次載入後會自動產生設定檔：
 ```
@@ -450,7 +463,8 @@ define('L4D2_DB_PASSWORD', '你在步驟1.5設定的密碼');
 - 戰役級聚合統計（全戰役的玩家表現合計）+ 玩家亮點卡片（10 種類別最出色玩家）
 - 章節重試追蹤：同一章節多次嘗試自動聚合，顯示重試次數與各次嘗試的詳情
 - 遊玩任一章節時自動 seed 同戰役所有章節地圖，確保地圖統計顯示完整章節列表（含未遊玩章節）
-- 玩家個人成就：依累計戰績自動計算 13 種階梯式成就 + 4 種特殊成就
+- 玩家個人成就：依累計戰績自動計算 20 種階梯式成就（含 7 種技巧成就）+ 4 種特殊成就
+- 技巧追蹤：Skeet / Crown / Level / Deadstop / Rock Skeet / Tongue Cut / Boomer Pop 七種技巧事件（需搭配 l4d2_skill_detect 插件）
 
 ### 數據寫入機制
 

@@ -1,5 +1,88 @@
 # Changelog
 
+## [1.8.0] - 2026-03-13
+
+### CS2 風格玩家卡片 + 技巧追蹤系統
+
+#### 新增
+
+- **CS2 風格玩家卡片** — 戰役詳細頁面的玩家區塊全面重設計，仿照 CS2 對局結算畫面
+
+  - 每場戰役顯示最多 4 張玩家卡片，以 Grid 排版呈現
+  - 每張卡片包含：分數（擊殺數）、玩家頭像、名稱連結、英文頭銜（附 hover tooltip 說明）、2×2 數據格（擊殺/傷害/命中率/死·倒）、頭銜徽章
+  - 頭銜顏色以 CSS 自訂屬性 `--card-accent` 動態套用至卡片邊框與徽章
+  - 每位玩家卡片下方顯示一條本局亮點或吐槽，四人不重複
+  - 所有卡片下方顯示一句關於本局最值得吐槽的幽默評語
+
+- **17 種玩家頭銜** — 貪心演算法依優先序為每位玩家分配唯一頭銜
+
+  **基本 10 種：**
+  | 頭銜 | 觸發條件 |
+  |------|---------|
+  | 殲滅者 The Exterminator | 全場擊殺最高 |
+  | 破壞之神 The Demolisher | 全場傷害輸出最高 |
+  | 爆頭獵人 The Headhunter | 全場爆頭數最高 |
+  | 特感剋星 The SI Slayer | 特感擊殺最多 |
+  | 神射手 The Marksman | 命中率最高（需 ≥100 發） |
+  | 救命稻草 The Lifeline | 救援隊友次數最多 |
+  | 移動藥局 The Pharmacy | 治療隊友次數最多 |
+  | 人形坦克 The Meatshield | 承受傷害最多 |
+  | 替死鬼 The Martyr | 死亡次數最多 |
+  | 友傷製造 The Team Hazard | 造成友傷傷害最高 |
+
+  **技巧 7 種（需 ≥1 次才可獲得）：**
+  | 頭銜 | 觸發條件 |
+  |------|---------|
+  | 空中截擊手 The Skeet King | 本局 Skeet 次數最多 |
+  | 女王剋星 The Crown Queen | 本局 Crown 次數最多 |
+  | 衝鋒拆解 The Leveler | 本局 Level 次數最多 |
+  | 反射之神 The Reflex God | 本局 Deadstop 次數最多 |
+  | 岩石毀滅 The Rock Crusher | 本局 Rock Skeet 次數最多 |
+  | 切舌救主 The Tongue Cutter | 本局切舌解救次數最多 |
+  | 炸彈終結 The Boomer Buster | 本局 Boomer Pop 次數最多 |
+
+- **亮點與吐槽系統** — 每局每位玩家顯示一條不重複的個人評語，涵蓋：
+  - 正面：零倒地零死亡、高命中率、高爆頭率、救援達人、Tank/Witch 剋星、破壞力驚人、電擊器大師
+  - 技巧正面：Skeet ≥3、Crown ≥2、Level ≥3、Deadstop ≥3、Rock Skeet ≥2、Tongue Cut ≥5、Boomer Pop ≥4
+  - 負面：友傷過高、頻繁死亡、過多倒地、命中率過低
+  - 技巧吐槽：擊殺多但四項技巧全零（「全靠亂槍打鳥」）
+
+- **技巧追蹤系統（完整三層管道）** — 追蹤來自 [l4d2_skill_detect](https://github.com/Tabun/skill_detect) 插件的 7 種技巧事件
+
+  - **資料庫遷移** (`migration_skill_stats.sql`)：為 `l4d2_player_stats` 與 `l4d2_session_player_stats` 各新增 7 個欄位（`skeets`、`crowns`、`levels`、`deadstops`、`rock_skeets`、`tongue_cuts`、`boomer_pops`）
+  - **SourceMod 模組** (`l4d2_stats_skills.inc`)：監聽 l4d2_skill_detect 的全域 forwards（Skeet/SkeetMelee/SkeetSniper/SkeetGL/WitchCrown/ChargerLevel/HunterDeadstop/TankRockSkeeted/TongueCut/SmokerSelfClear/BoomerPop），累計至記憶體緩衝
+  - **PHP 個人成就**：玩家個人頁面新增 7 種技巧階梯成就（銅/銀/金）
+
+  | 成就 | 門檻（銅/銀/金） |
+  |------|----------------|
+  | 空中截擊（Skeet） | 5 / 20 / 50 |
+  | 女王殺手（Crown） | 3 / 10 / 30 |
+  | 地平壓制（Level） | 5 / 20 / 50 |
+  | 反應之神（Deadstop） | 5 / 20 / 50 |
+  | 岩石粉碎（Rock Skeet） | 3 / 10 / 20 |
+  | 切舌俠（Tongue Cut） | 15 / 50 / 100 |
+  | 炸彈拆除（Boomer Pop） | 5 / 20 / 50 |
+
+#### 變更
+
+- `class-sessiondetail.php` — 新增 `compute_player_cards()`、`pick_unique_highlight()`、`compute_funny_line()` 三個靜態方法；聚合 SQL 新增 7 個技巧欄位
+- `class-player.php` — `compute_player_achievements()` 新增 7 種技巧成就
+- `templates/campaign-detail.php` — 玩家亮點卡片區塊改為 CS2 風格玩家卡片
+- `sourcemod-plugin/scripting/l4d2_stats.sp` — `MAX_QUERY_LENGTH` 提升至 8192；`PlayerStatBuffer` struct 新增 7 個技巧欄位；加入 `#include "include/l4d2_stats_skills.inc"`
+- `sourcemod-plugin/scripting/include/l4d2_stats_db.inc` — `FlushPlayerStats` 與 session INSERT 查詢加入 7 個技巧欄位
+- `l4d2-stats.css` — 新增 CS2 風格卡片完整樣式（`.l4d2-match-players`、`.l4d2-match-card`、`.l4d2-mc-*`、`.l4d2-mc-hl-good/bad`、`.l4d2-mc-funny`）
+
+#### 新增檔案
+
+- `sourcemod-plugin/sql/migration_skill_stats.sql`
+- `sourcemod-plugin/scripting/include/l4d2_stats_skills.inc`
+
+#### 前置需求（技巧追蹤）
+
+技巧追蹤需另外在伺服器安裝 **l4d2_skill_detect** 插件（by Tabun），`l4d2_stats.smx` 才能收到技巧事件。未安裝時插件仍可正常運作，技巧欄位維持 0。
+
+---
+
 ## [1.7.0] - 2026-03-02
 
 ### 成就系統 + 玩家亮點卡片
