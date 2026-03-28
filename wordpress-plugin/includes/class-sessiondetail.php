@@ -99,7 +99,7 @@ class SessionDetail {
                 SUM(COALESCE(sps.boomer_pops, 0)) AS boomer_pops,
                 (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
                 CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
-                     THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
+                     THEN LEAST(100, ROUND((SUM(COALESCE(sps.shots_hit, 0)) + SUM(COALESCE(sps.kills_infected, 0))) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1))
                      ELSE 0
                 END AS accuracy,
                 CASE WHEN (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) > 0
@@ -366,7 +366,7 @@ class SessionDetail {
                 SUM(COALESCE(sps.boomer_pops, 0)) AS boomer_pops,
                 (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) AS total_kills,
                 CASE WHEN SUM(COALESCE(sps.shots_fired, 0)) > 0
-                     THEN ROUND(SUM(COALESCE(sps.shots_hit, 0)) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1)
+                     THEN LEAST(100, ROUND((SUM(COALESCE(sps.shots_hit, 0)) + SUM(COALESCE(sps.kills_infected, 0))) / SUM(COALESCE(sps.shots_fired, 0)) * 100, 1))
                      ELSE 0
                 END AS accuracy,
                 CASE WHEN (SUM(COALESCE(sps.kills_infected, 0)) + SUM(COALESCE(sps.kills_si, 0))) > 0
@@ -775,7 +775,7 @@ class SessionDetail {
                 COALESCE(sps.melee_hits, 0) AS melee_hits,
                 (COALESCE(sps.kills_infected, 0) + COALESCE(sps.kills_si, 0)) AS total_kills,
                 CASE WHEN COALESCE(sps.shots_fired, 0) > 0
-                     THEN ROUND(sps.shots_hit / sps.shots_fired * 100, 1)
+                     THEN LEAST(100, ROUND((sps.shots_hit + COALESCE(sps.kills_infected, 0)) / sps.shots_fired * 100, 1))
                      ELSE 0
                 END AS accuracy,
                 CASE WHEN (COALESCE(sps.kills_infected, 0) + COALESCE(sps.kills_si, 0)) > 0
