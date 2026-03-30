@@ -26,6 +26,7 @@ class Leaderboard {
                     WHERE sp2.player_id = p.id
                     AND sp2.leave_time IS NULL
                     AND s2.end_time IS NULL
+                    AND s2.start_time >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL 4 HOUR)
                 ) AS is_online,
                 ps.kills_infected + ps.kills_si AS total_kills,
                 ps.kills_si,
